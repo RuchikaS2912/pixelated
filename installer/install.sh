@@ -180,14 +180,58 @@ PLIST
     [ -f "$cand" ] && SPRITE="$cand" && break
   done
   if [ -n "$SPRITE" ] && command -v iconutil >/dev/null 2>&1 && command -v sips >/dev/null 2>&1; then
+    # 1024-quality icon: nearest-neighbor upscale keeps pixel art crisp.
+    MASTER="$(mktemp -d)/master.png"
+    python3 - "$SPRITE" "$MASTER" <<'PYEOF'
+import struct, zlib, sys
+src, dst = sys.argv[1], sys.argv[2]
+data = open(src, 'rb').read()
+pos = 8; idat = b''
+while pos < len(data):
+    ln = struct.unpack('>I', data[pos:pos+4])[0]; typ = data[pos+4:pos+8]
+    if typ == b'IHDR': w, h = struct.unpack('>II', data[pos+8:pos+16])
+    elif typ == b'IDAT': idat += data[pos+8:pos+8+ln]
+    pos += ln + 12
+raw = zlib.decompress(idat); stride = w * 4
+prev = bytearray(stride); out = bytearray(); i = 0
+for y in range(h):
+    f = raw[i]; i += 1; line = bytearray(raw[i:i+stride]); i += stride
+    if f == 1:
+        for x in range(4, stride): line[x] = (line[x] + line[x-4]) & 255
+    elif f == 2:
+        for x in range(stride): line[x] = (line[x] + prev[x]) & 255
+    elif f == 3:
+        for x in range(stride): line[x] = (line[x] + ((line[x-4] if x >= 4 else 0) + prev[x]) // 2) & 255
+    elif f == 4:
+        for x in range(stride):
+            a = line[x-4] if x >= 4 else 0; b = prev[x]; c = prev[x-4] if x >= 4 else 0
+            p = a + b - c; pa, pb, pc = abs(p-a), abs(p-b), abs(p-c)
+            pr = a if (pa <= pb and pa <= pc) else (b if pb <= pc else c)
+            line[x] = (line[x] + pr) & 255
+    out += line; prev = line
+S = 5; W, H = w * S, h * S
+big = bytearray(W * H * 4)
+for y in range(H):
+    sy = y // S
+    for x in range(W):
+        so = (sy * w + x // S) * 4; do = (y * W + x) * 4
+        big[do:do+4] = out[so:so+4]
+rawo = bytearray()
+for y in range(H):
+    rawo.append(0); rawo += big[y*W*4:(y+1)*W*4]
+def chunk(t, d):
+    return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
+png = (b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', W, H, 8, 6, 0, 0, 0))
+       + chunk(b'IDAT', zlib.compress(bytes(rawo), 9)) + chunk(b'IEND', b''))
+open(dst, 'wb').write(png)
+PYEOF
     ICONSET="$(mktemp -d)/icon.iconset"
     mkdir -p "$ICONSET"
-    # Slim icon set: standard sizes only (no wasteful @2x upscales from
-    # small sprites) keeps the .app bundle tiny.
-    for size in 16 32 128 256; do
-      sips -z "$size" "$size" "$SPRITE" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null 2>&1
+    for size in 16 32 128 256 512; do
+      sips -z "$size" "$size" "$MASTER" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null 2>&1
+      sips -z $((size*2)) $((size*2)) "$MASTER" --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null 2>&1
     done
-    sips -z 512 512 "$SPRITE" --out "$ICONSET/icon_512x512.png" >/dev/null 2>&1
+    sips -z 1024 1024 "$MASTER" --out "$ICONSET/icon_1024x1024.png" >/dev/null 2>&1
     if iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns" >/dev/null 2>&1; then
       plutil -insert CFBundleIconFile -string "AppIcon" "$APP/Contents/Info.plist" >/dev/null 2>&1 || true
     fi
