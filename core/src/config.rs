@@ -32,6 +32,10 @@ pub struct Config {
     /// Reminder direction: "random" (default), "left", or "right".
     #[serde(default = "default_direction")]
     pub direction: String,
+    /// Meeting mode: suppress walks and hide the pet (screen sharing).
+    /// Reminders keep firing (logged) and coalesce — one walk on resume.
+    #[serde(default)]
+    pub meeting_mode: bool,
     /// Log level for the daemon: "error" | "info" | "debug".
     #[serde(default = "default_log_level")]
     pub log_level: String,
@@ -61,6 +65,7 @@ impl Default for Config {
             duration: None,
             max_simultaneous: default_max_simul(),
             direction: default_direction(),
+            meeting_mode: false,
             log_level: default_log_level(),
         }
     }
@@ -95,6 +100,7 @@ impl Config {
     }
 
     pub fn normalize(&mut self) {
+        // meeting_mode needs no normalization
         if self.character.trim().is_empty() {
             self.character = default_character();
         }
@@ -146,6 +152,10 @@ impl Config {
             "max_simultaneous" | "max-simultaneous" => {
                 let v: u32 = value.parse().map_err(|_| "expected 1-4".to_string())?;
                 self.max_simultaneous = v.clamp(1, 4);
+            }
+            "meeting_mode" | "meeting" => {
+                self.meeting_mode = parse_bool(value)
+                    .ok_or_else(|| format!("invalid meeting_mode '{value}' (true/false)"))?;
             }
             "direction" => {
                 let d = value.to_lowercase();

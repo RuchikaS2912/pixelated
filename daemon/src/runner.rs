@@ -37,6 +37,9 @@ pub struct Shared {
     pub queue: Mutex<ShowQueue>,
     pub pool: Mutex<RendererPool>,
     pub stop: AtomicBool,
+    /// Tracks meeting-mode edges so the pet can be hidden/restored.
+    pub meeting_was_on: AtomicBool,
+    pub pet_hidden_by_meeting: AtomicBool,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -112,6 +115,8 @@ pub fn run(bin: std::path::PathBuf) -> Result<(), DaemonError> {
         queue: Mutex::new(ShowQueue::new(1)),
         pool: Mutex::new(RendererPool::new()),
         stop: AtomicBool::new(false),
+        meeting_was_on: AtomicBool::new(false),
+        pet_hidden_by_meeting: AtomicBool::new(false),
     });
     *shared.queue.lock().unwrap() =
         ShowQueue::new(shared.config.lock().unwrap().max_simultaneous as usize);
@@ -206,8 +211,40 @@ fn scheduler_loop(shared: Arc<Shared>, home: Home, bin: std::path::PathBuf) {
             }
         }
 
+        // ---- meeting mode edges: hide/restore the pet ----
+        {
+            let meeting_now = shared.config.lock().unwrap().meeting_mode;
+            let was_on = shared
+                .meeting_was_on
+                .swap(meeting_now, Ordering::SeqCst);
+            if meeting_now && !was_on {
+                if crate::runner::pets_running() {
+                    crate::runner::kill_pets();
+                    shared.pet_hidden_by_meeting.store(true, Ordering::SeqCst);
+                }
+                log_to_file(&home, "meeting mode ON: walks suppressed, pet hidden");
+            } else if !meeting_now && was_on {
+                if shared.pet_hidden_by_meeting.swap(false, Ordering::SeqCst) {
+                    let name = shared.config.lock().unwrap().character.clone();
+                    let _ = std::process::Command::new(&bin)
+                        .args(["__pet", "--character", &name])
+                        .stdin(std::process::Stdio::null())
+                        .stdout(std::process::Stdio::null())
+                        .stderr(std::process::Stdio::null())
+                        .spawn();
+                }
+                log_to_file(&home, "meeting mode OFF: walks resumed, pet restored");
+            }
+        }
+
         // ---- scheduler ----
         {
+            if shared.config.lock().unwrap().meeting_mode {
+                // Reminders stay pending (anchors not advanced): they
+                // coalesce into one walk when meeting mode ends.
+                let alive = shared.pool.lock().unwrap().reap();
+                let _ = alive;
+            } else {
             let reminders = shared.reminders.lock().unwrap().clone();
             let mut state = shared.state.lock().unwrap();
             let fired = schedule_tick(&reminders, &mut state, now, wake_skip);
@@ -223,6 +260,7 @@ fn scheduler_loop(shared: Arc<Shared>, home: Home, bin: std::path::PathBuf) {
                         label: format!("{id}"),
                     });
                 }
+            }
             }
         }
 
@@ -287,6 +325,34 @@ pub fn status_info(shared: &Shared) -> StatusInfo {
         character: shared.config.lock().unwrap().character.clone(),
         next_title: next.map(|(r, _)| r.title.clone()),
         next_in_secs: next.map(|(_, t)| (t - now).num_seconds()),
+    }
+}
+
+/// True if any desktop pet process is running.
+pub fn pets_running() -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("pgrep")
+            .arg("-f")
+            .arg("dribble __pet")
+            .output()
+            .map(|o| !o.stdout.is_empty())
+            .unwrap_or(false)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        false
+    }
+}
+
+/// Kill every desktop pet (discovery by command line).
+pub fn kill_pets() {
+    #[cfg(unix)]
+    {
+        let _ = std::process::Command::new("pkill")
+            .arg("-f")
+            .arg("dribble __pet")
+            .output();
     }
 }
 

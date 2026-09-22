@@ -483,6 +483,7 @@ pub fn stop() -> i32 {
 pub fn status() -> i32 {
     let home = home();
     let (list, _) = load_list(&home).unwrap_or_default();
+    let cfg = Config::load(&home).unwrap_or_default();
     ui::header("Dribble");
     println!();
     let ping = wremind_daemon::ipc::send(
@@ -491,6 +492,7 @@ pub fn status() -> i32 {
     )
     .ok()
     .filter(|r| r.ok);
+    let meeting_on = cfg.meeting_mode;
     match ping.and_then(|r| r.info) {
         Some(info) => {
             let next = match (&info.next_title, info.next_in_secs) {
@@ -501,6 +503,9 @@ pub fn status() -> i32 {
             println!("PID:        {}", info.pid);
             println!("Reminders:  {} ({} enabled)", info.reminders, info.enabled_reminders);
             println!("Character:  {}", info.character);
+            if meeting_on {
+                println!("Meeting:    {}", ui::yellow("mode ON — walks suppressed"));
+            }
             println!("Next:       {next}");
         }
         None => {
@@ -678,6 +683,10 @@ pub fn config(op: ConfigOp) -> i32 {
             );
             println!("  max_simultaneous = {}", cfg.max_simultaneous);
             println!("  direction        = {}", cfg.direction);
+            println!(
+                "  meeting_mode     = {}",
+                if cfg.meeting_mode { "on (walks suppressed)" } else { "off" }
+            );
             println!("  log_level        = {}", cfg.log_level);
             println!();
             println!("  {}", ui::dim(&format!("file: {}", home.config_file().display())));
@@ -829,6 +838,51 @@ fn copy_dir(src: &std::path::Path, dst: &std::path::Path) -> Result<(), String> 
         std::fs::copy(entry.path(), &to).map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// meeting mode
+// ---------------------------------------------------------------------------
+
+pub fn meeting(state: Option<String>) -> i32 {
+    let home = home();
+    let mut cfg = Config::load(&home).unwrap_or_default();
+    match state.as_deref().map(|s| s.to_lowercase()).as_deref() {
+        None | Some("status") => {
+            println!(
+                "Meeting mode: {}",
+                if cfg.meeting_mode {
+                    ui::green("on — walks suppressed, pet hidden")
+                } else {
+                    ui::dim("off")
+                }
+            );
+            0
+        }
+        Some("on") | Some("true") => {
+            cfg.meeting_mode = true;
+            if let Err(e) = cfg.save(&home) {
+                ui::fail(&e.to_string());
+                return 1;
+            }
+            ui::success("Meeting mode on — no walks, pet hidden");
+            println!("{}", ui::dim("  reminders stay queued and coalesce; turn off with: dribble meeting off"));
+            0
+        }
+        Some("off") | Some("false") => {
+            cfg.meeting_mode = false;
+            if let Err(e) = cfg.save(&home) {
+                ui::fail(&e.to_string());
+                return 1;
+            }
+            ui::success("Meeting mode off — he's back");
+            0
+        }
+        Some(other) => {
+            ui::fail(&format!("unknown state '{other}' (use on or off)"));
+            1
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------

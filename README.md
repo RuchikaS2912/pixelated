@@ -98,12 +98,28 @@ While the daemon runs, a small ⚽ sits in your menu bar:
 
 - **Reminders list** — every reminder with its schedule and next-fire
   countdown; click any to pause/resume just that one (● active · ○ paused)
+- **Meeting mode** — ✓ toggle that suppresses walks and hides the pet
+  while screen sharing
 - **Walk now** — he crosses the screen immediately
 - **Pause / Resume all reminders**
 - **Show / Hide desktop pet**
 - **Quit Dribble** — no terminal needed
 
 The list refreshes every time you open the menu.
+
+### Meeting mode (screen sharing)
+
+A walk **does** appear on a shared screen — so before (or during) a
+meeting:
+
+```bash
+dribble meeting on    # no walks, pet hidden; reminders queue up
+dribble meeting off   # he's back (one coalesced walk if any came due)
+```
+
+Also one click in the ⚽ menu bar: **Meeting mode — no walks, hide pet**
+(shows a ✓ when active). Reminders aren't lost — anything that came due
+while sharing fires once, right after you turn it off.
 
 ### The desktop pet
 

@@ -124,6 +124,12 @@ enum Command {
         op: CharacterOp,
     },
 
+    /// Meeting mode: suppress walks + hide pet (for screen sharing)
+    Meeting {
+        /// on | off (omit to show current state)
+        state: Option<String>,
+    },
+
     /// Keep the character on your desktop — drag him anywhere
     Pet {
         #[arg(long)]
@@ -237,6 +243,7 @@ fn main() {
         Command::Disable => commands::enable(false),
         Command::Config { op } => commands::config(op),
         Command::Character { op } => commands::character(op),
+        Command::Meeting { state } => commands::meeting(state),
         Command::Pet { character, stop } => commands::pet(character, stop),
         Command::Doctor => commands::doctor(),
         Command::Logs { lines } => commands::logs(lines),

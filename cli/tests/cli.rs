@@ -300,6 +300,20 @@ fn reminders_survive_restart() {
 }
 
 #[test]
+fn meeting_mode_command() {
+    let h = TempHome::new();
+    h.cmd().arg("meeting").assert().stdout(contains("Meeting mode"));
+    h.cmd().args(["meeting", "on"]).assert().stdout(contains("no walks"));
+    h.cmd().arg("meeting").assert().stdout(contains("on"));
+    h.cmd()
+        .args(["config", "set", "meeting_mode", "true"])
+        .assert()
+        .success();
+    h.cmd().arg("config").arg("get").assert().stdout(contains("meeting"));
+    h.cmd().args(["meeting", "off"]).assert().stdout(contains("back"));
+}
+
+#[test]
 fn pet_command_and_stop() {
     let h = TempHome::new();
     // Headless (DRIBBLE_NO_RENDER=1 is inherited from bin()):

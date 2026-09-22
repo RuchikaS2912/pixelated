@@ -31,6 +31,7 @@ struct MenuIvars {
     bin: std::path::PathBuf,
     home: Home,
     menu: OnceCell<Retained<NSMenu>>,
+    meeting_item: OnceCell<Retained<NSMenuItem>>,
     status_item: OnceCell<Retained<objc2_app_kit::NSStatusItem>>,
 }
 
@@ -113,6 +114,25 @@ define_class!(
             let _ = save_reminders(&iv.home, &list);
         }
 
+        #[unsafe(method(toggleMeeting:))]
+        fn toggle_meeting(&self, _sender: Option<&AnyObject>) {
+            let iv = self.ivars();
+            let mut cfg = { iv.shared.config.lock().unwrap().clone() };
+            cfg.meeting_mode = !cfg.meeting_mode;
+            let now_on = cfg.meeting_mode;
+            if cfg.save(&iv.home).is_ok() {
+                // Apply immediately (the loop also reloads on mtime change).
+                *iv.shared.config.lock().unwrap() = cfg;
+                if let Some(item) = iv.meeting_item.get() {
+                    item.setState(if now_on {
+                        objc2_app_kit::NSControlStateValueOn
+                    } else {
+                        objc2_app_kit::NSControlStateValueOff
+                    });
+                }
+            }
+        }
+
         #[unsafe(method(showPet:))]
         fn show_pet(&self, _sender: Option<&AnyObject>) {
             let iv = self.ivars();
@@ -191,6 +211,24 @@ impl MenuTarget {
         let status_line = menu_item(mtm, &header, None, self);
         status_line.setEnabled(false);
         menu.addItem(&status_line);
+
+        // ---- meeting mode toggle ----
+        let meeting = menu_item(
+            mtm,
+            "Meeting mode — no walks, hide pet",
+            Some(objc2::sel!(toggleMeeting:)),
+            self,
+        );
+        meeting.setState(if self.ivars().shared.config.lock().unwrap().meeting_mode {
+            objc2_app_kit::NSControlStateValueOn
+        } else {
+            objc2_app_kit::NSControlStateValueOff
+        });
+        menu.addItem(&meeting);
+        // refresh the stored handle for instant state updates
+        if let Some(prev) = self.ivars().meeting_item.get() {
+            let _ = prev;
+        }
 
         // ---- reminders list ----
         menu.addItem(&NSMenuItem::separatorItem(mtm));
@@ -359,6 +397,7 @@ pub fn run_menu_bar(shared: Arc<Shared>, bin: std::path::PathBuf, home: Home) {
         bin,
         home,
         menu: OnceCell::new(),
+        meeting_item: OnceCell::new(),
         status_item: OnceCell::new(),
     });
     let target: Retained<MenuTarget> = unsafe { msg_send![super(alloc), init] };
