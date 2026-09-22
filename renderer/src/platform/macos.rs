@@ -576,6 +576,38 @@ define_class!(
             p.save();
         }
 
+        #[unsafe(method(screensChanged:))]
+        fn screens_changed(&self, _n: &objc2_foundation::NSNotification) {
+            // Display configuration changed (monitor plugged/unplugged,
+            // resolution change): keep the pet on a visible screen.
+            let Some(window) = self.window() else { return };
+            let Some(mtm) = MainThreadMarker::new() else { return };
+            let Some(screen) = NSScreen::mainScreen(mtm) else { return };
+            let visible = screen.visibleFrame();
+            let f = window.frame();
+            let w = f.size.width as f64;
+            let h = f.size.height as f64;
+            let v_x = visible.origin.x as f64;
+            let v_y = visible.origin.y as f64;
+            let v_w = visible.size.width as f64;
+            let v_h = visible.size.height as f64;
+            // Fully off-screen (no intersection) -> back to default spot.
+            let intersects = f.origin.x + w > v_x
+                && f.origin.x < v_x + v_w
+                && f.origin.y + h > v_y
+                && f.origin.y < v_y + v_h;
+            let origin = if intersects {
+                // Clamp into the visible area.
+                NSPoint::new(
+                    (f.origin.x as f64).clamp(v_x - 20.0, v_x + v_w - w + 20.0),
+                    (f.origin.y as f64).clamp(v_y - 10.0, v_y + v_h - h + 10.0),
+                )
+            } else {
+                NSPoint::new(v_x + v_w * 0.78, v_y + v_h * 0.18)
+            };
+            window.setFrameOrigin(origin);
+        }
+
         #[unsafe(method(rightMouseDown:))]
         fn right_mouse_down(&self, _event: &NSEvent) {
             // dismiss the pet: clean exit
@@ -665,6 +697,20 @@ unsafe fn run_pet_inner(character_name: Option<&str>) -> Result<(), String> {
     });
     let view: Retained<PetView> = msg_send![super(alloc), initWithFrame: content_rect];
     window.setContentView(Some(&view));
+
+    // Re-clamp the pet whenever the display configuration changes.
+    unsafe {
+        let center = objc2_foundation::NSNotificationCenter::defaultCenter();
+        let name = NSString::from_str("NSApplicationDidChangeScreenParametersNotification");
+        let target: &objc2::runtime::AnyObject =
+            &*(Retained::as_ptr(&view) as *const objc2::runtime::AnyObject);
+        let _ = center.addObserver_selector_name_object(
+            target,
+            objc2::sel!(screensChanged:),
+            Some(&name),
+            None,
+        );
+    }
 
     // persist pet pid for `dribble pet --stop`
     let _ = std::fs::write(home.root().join("pet.pid"), std::process::id().to_string());

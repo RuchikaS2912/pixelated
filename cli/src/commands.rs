@@ -493,6 +493,7 @@ pub fn status() -> i32 {
     .ok()
     .filter(|r| r.ok);
     let meeting_on = cfg.meeting_mode;
+    let meeting_auto = ping.as_ref().and_then(|r| r.info.as_ref()).and_then(|i| i.meeting.clone());
     match ping.and_then(|r| r.info) {
         Some(info) => {
             let next = match (&info.next_title, info.next_in_secs) {
@@ -505,11 +506,19 @@ pub fn status() -> i32 {
             println!("Character:  {}", info.character);
             if meeting_on {
                 println!("Meeting:    {}", ui::yellow("mode ON — walks suppressed"));
+            } else if let Some(app) = &meeting_auto {
+                println!(
+                    "Meeting:    {}",
+                    ui::yellow(&format!("auto ({app} detected) — walks suppressed"))
+                );
             }
             println!("Next:       {next}");
         }
         None => {
             println!("Daemon:     {}", ui::yellow("stopped"));
+            if let Some(app) = &meeting_auto {
+                let _ = app;
+            }
             let state = load_state_lossy(&home);
             let now = Utc::now();
             match next_upcoming(list.reminders.iter(), &state, now) {
@@ -852,10 +861,15 @@ pub fn meeting(state: Option<String>) -> i32 {
             println!(
                 "Meeting mode: {}",
                 if cfg.meeting_mode {
-                    ui::green("on — walks suppressed, pet hidden")
+                    ui::green("on — walks suppressed, pet hidden").to_string()
                 } else {
-                    ui::dim("off")
+                    ui::dim("off").to_string()
                 }
+            );
+            println!(
+                "Auto-detect:  {}  (patterns: {})",
+                if cfg.meeting_auto { "on" } else { "off" },
+                cfg.meeting_apps.join(", ")
             );
             0
         }

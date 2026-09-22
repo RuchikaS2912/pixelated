@@ -36,6 +36,12 @@ pub struct Config {
     /// Reminders keep firing (logged) and coalesce — one walk on resume.
     #[serde(default)]
     pub meeting_mode: bool,
+    /// Auto meeting mode: suppress walks while a meeting app is detected.
+    #[serde(default = "default_meeting_auto")]
+    pub meeting_auto: bool,
+    /// Process-name patterns that indicate a meeting (pgrep -i -f).
+    #[serde(default = "default_meeting_apps")]
+    pub meeting_apps: Vec<String>,
     /// Log level for the daemon: "error" | "info" | "debug".
     #[serde(default = "default_log_level")]
     pub log_level: String,
@@ -53,6 +59,14 @@ fn default_direction() -> String {
 fn default_log_level() -> String {
     "info".into()
 }
+fn default_meeting_auto() -> bool {
+    true
+}
+fn default_meeting_apps() -> Vec<String> {
+    // CptHost = Zoom's live call/capture host; zoom.us = Zoom app open.
+    // Teams runs resident, so it is deliberately NOT in the default list.
+    vec!["CptHost".into(), "zoom.us".into()]
+}
 
 impl Default for Config {
     fn default() -> Self {
@@ -66,6 +80,8 @@ impl Default for Config {
             max_simultaneous: default_max_simul(),
             direction: default_direction(),
             meeting_mode: false,
+            meeting_auto: default_meeting_auto(),
+            meeting_apps: default_meeting_apps(),
             log_level: default_log_level(),
         }
     }
@@ -152,6 +168,21 @@ impl Config {
             "max_simultaneous" | "max-simultaneous" => {
                 let v: u32 = value.parse().map_err(|_| "expected 1-4".to_string())?;
                 self.max_simultaneous = v.clamp(1, 4);
+            }
+            "meeting_auto" | "meeting-auto" => {
+                self.meeting_auto =
+                    parse_bool(value).ok_or_else(|| format!("invalid meeting_auto '{value}' (true/false)"))?;
+            }
+            "meeting_apps" | "meeting-apps" => {
+                let list: Vec<String> = value
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect();
+                if list.is_empty() {
+                    return Err("meeting_apps needs at least one pattern".into());
+                }
+                self.meeting_apps = list;
             }
             "meeting_mode" | "meeting" => {
                 self.meeting_mode = parse_bool(value)

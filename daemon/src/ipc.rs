@@ -133,6 +133,7 @@ mod tests {
             character: "footballer".into(),
             next_title: Some("Drink water".into()),
             next_in_secs: Some(600),
+            meeting: None,
         }));
         let json = serde_json::to_string(&resp).unwrap();
         assert!(json.contains("\"pid\":42"));

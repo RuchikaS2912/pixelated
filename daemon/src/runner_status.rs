@@ -13,4 +13,7 @@ pub struct StatusInfo {
     /// Seconds until next reminder fires (positive = future).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub next_in_secs: Option<i64>,
+    /// Effective meeting state: "on" (manual) or the detected app name.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub meeting: Option<String>,
 }

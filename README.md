@@ -121,6 +121,20 @@ Also one click in the ⚽ menu bar: **Meeting mode — no walks, hide pet**
 (shows a ✓ when active). Reminders aren't lost — anything that came due
 while sharing fires once, right after you turn it off.
 
+**Forgot to turn it on? Auto-detection has your back.** Dribble watches
+for meeting apps and activates meeting mode by itself (status shows
+`auto (zoom.us detected)`). Defaults detect Zoom's live-call host
+(`CptHost`) and the Zoom app; tune or disable:
+
+```bash
+dribble config set meeting_apps "CptHost,zoom.us,MSTeams"  # custom patterns
+dribble config set meeting_auto false                        # disable auto
+dribble meeting                                              # see current state
+```
+
+(The pet also snaps back onto a visible screen whenever you plug or
+unplug a display.)
+
 ### The desktop pet
 
 ```bash

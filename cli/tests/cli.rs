@@ -4,7 +4,6 @@
 //! start/trigger/stop cycle with rendering suppressed
 //! (DRIBBLE_NO_RENDER=1) so CI stays headless.
 
-use std::path::PathBuf;
 use std::process::Command;
 
 use assert_cmd::prelude::*;

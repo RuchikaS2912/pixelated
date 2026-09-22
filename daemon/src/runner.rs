@@ -40,6 +40,8 @@ pub struct Shared {
     /// Tracks meeting-mode edges so the pet can be hidden/restored.
     pub meeting_was_on: AtomicBool,
     pub pet_hidden_by_meeting: AtomicBool,
+    /// Auto-detected meeting (pattern name that matched, if any).
+    pub meeting_detected: Mutex<Option<String>>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -117,6 +119,7 @@ pub fn run(bin: std::path::PathBuf) -> Result<(), DaemonError> {
         stop: AtomicBool::new(false),
         meeting_was_on: AtomicBool::new(false),
         pet_hidden_by_meeting: AtomicBool::new(false),
+        meeting_detected: Mutex::new(None),
     });
     *shared.queue.lock().unwrap() =
         ShowQueue::new(shared.config.lock().unwrap().max_simultaneous as usize);
@@ -164,6 +167,7 @@ pub fn run(bin: std::path::PathBuf) -> Result<(), DaemonError> {
 }
 
 fn scheduler_loop(shared: Arc<Shared>, home: Home, bin: std::path::PathBuf) {
+    let mut tick_count: u64 = 0;
     // Main loop.
     let mut last_tick_wall = SystemTime::now();
     let mut reminders_mtime = file_mtime(&home.reminders_file());
@@ -211,9 +215,21 @@ fn scheduler_loop(shared: Arc<Shared>, home: Home, bin: std::path::PathBuf) {
             }
         }
 
-        // ---- meeting mode edges: hide/restore the pet ----
+        // ---- meeting mode: auto-detection + edges ----
         {
-            let meeting_now = shared.config.lock().unwrap().meeting_mode;
+            // Auto-detect every ~5 s (ticks are ~1 s).
+            tick_count += 1;
+            if tick_count % 5 == 0 {
+                let (auto_on, patterns) = {
+                    let cfg = shared.config.lock().unwrap();
+                    (cfg.meeting_auto, cfg.meeting_apps.clone())
+                };
+                let detected = if auto_on { detect_meeting(&patterns) } else { None };
+                *shared.meeting_detected.lock().unwrap() = detected;
+            }
+            let manual = shared.config.lock().unwrap().meeting_mode;
+            let detected = shared.meeting_detected.lock().unwrap().clone();
+            let meeting_now = manual || detected.is_some();
             let was_on = shared
                 .meeting_was_on
                 .swap(meeting_now, Ordering::SeqCst);
@@ -222,7 +238,15 @@ fn scheduler_loop(shared: Arc<Shared>, home: Home, bin: std::path::PathBuf) {
                     crate::runner::kill_pets();
                     shared.pet_hidden_by_meeting.store(true, Ordering::SeqCst);
                 }
-                log_to_file(&home, "meeting mode ON: walks suppressed, pet hidden");
+                match &detected {
+                    Some(pat) => log_to_file(
+                        &home,
+                        &format!("meeting auto-detected ({pat}): walks suppressed, pet hidden"),
+                    ),
+                    None => {
+                        log_to_file(&home, "meeting mode ON: walks suppressed, pet hidden")
+                    }
+                }
             } else if !meeting_now && was_on {
                 if shared.pet_hidden_by_meeting.swap(false, Ordering::SeqCst) {
                     let name = shared.config.lock().unwrap().character.clone();
@@ -239,7 +263,9 @@ fn scheduler_loop(shared: Arc<Shared>, home: Home, bin: std::path::PathBuf) {
 
         // ---- scheduler ----
         {
-            if shared.config.lock().unwrap().meeting_mode {
+            let meeting_active = shared.config.lock().unwrap().meeting_mode
+                || shared.meeting_detected.lock().unwrap().is_some();
+            if meeting_active {
                 // Reminders stay pending (anchors not advanced): they
                 // coalesce into one walk when meeting mode ends.
                 let alive = shared.pool.lock().unwrap().reap();
@@ -314,8 +340,14 @@ pub fn status_info(shared: &Shared) -> StatusInfo {
     let reminders = shared.reminders.lock().unwrap();
     let state = shared.state.lock().unwrap();
     let next = next_upcoming(reminders.reminders.iter(), &state, now);
+    let meeting = if shared.config.lock().unwrap().meeting_mode {
+        Some("on".to_string())
+    } else {
+        shared.meeting_detected.lock().unwrap().clone()
+    };
     StatusInfo {
         pid: std::process::id(),
+        meeting,
         reminders: reminders.reminders.len(),
         enabled_reminders: reminders
             .reminders
@@ -326,6 +358,59 @@ pub fn status_info(shared: &Shared) -> StatusInfo {
         next_title: next.map(|(r, _)| r.title.clone()),
         next_in_secs: next.map(|(_, t)| (t - now).num_seconds()),
     }
+}
+
+/// Scan for meeting-app signals. Returns the first matching pattern.
+#[cfg(test)]
+fn detect_meeting_testable() {
+    use std::process::{Command, Stdio};
+    let mut child = Command::new("bash")
+        .arg("-c")
+        .arg("exec -a DribbleMeetingProbe sleep 4")
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .expect("bash");
+    std::thread::sleep(std::time::Duration::from_millis(500));
+    let hit = detect_meeting(&["DribbleMeetingProbe".to_string()]);
+    let _ = child.kill();
+    assert_eq!(hit.as_deref(), Some("DribbleMeetingProbe"), "detection failed");
+}
+
+#[cfg(test)]
+mod detect_tests {
+    #[test]
+    fn detects_named_process() {
+        super::detect_meeting_testable();
+    }
+}
+
+/// Scan for meeting-app signals. Returns the first matching pattern.
+/// Runs pgrep per pattern; cheap enough at a 5 s cadence.
+fn detect_meeting(patterns: &[String]) -> Option<String> {
+    for pat in patterns {
+        #[cfg(unix)]
+        {
+            let ok = std::process::Command::new("pgrep")
+                .args(["-i", "-f"])
+                .arg(pat)
+                .stdin(std::process::Stdio::null())
+                .stdout(std::process::Stdio::piped()) // output() keeps explicit stdio!
+                .stderr(std::process::Stdio::null())
+                .output()
+                .map(|o| !o.stdout.is_empty())
+                .unwrap_or(false);
+            if ok {
+                return Some(pat.clone());
+            }
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = pat;
+        }
+    }
+    None
 }
 
 /// True if any desktop pet process is running.
