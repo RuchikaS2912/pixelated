@@ -688,6 +688,12 @@ unsafe fn run_pet_inner(character_name: Option<&str>) -> Result<(), String> {
     window.setIgnoresMouseEvents(false); // the pet is grabbable
     window.setHasShadow(false);
     window.setReleasedWhenClosed(false);
+    // The pet lives on every Space (and alongside fullscreen apps), so
+    // switching desktops never leaves him behind.
+    window.setCollectionBehavior(
+        objc2_app_kit::NSWindowCollectionBehavior::CanJoinAllSpaces
+            | objc2_app_kit::NSWindowCollectionBehavior::FullScreenAuxiliary,
+    );
 
     let alloc = PetView::alloc(mtm).set_ivars(PetIvars {
         frames,

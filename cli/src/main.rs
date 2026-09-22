@@ -124,6 +124,14 @@ enum Command {
         op: CharacterOp,
     },
 
+    /// Snapshot meeting-related processes (to find call markers).
+    /// Run once idle, once in a call, then `dribble probe --diff`.
+    Probe {
+        /// Compare the two most recent snapshots
+        #[arg(long)]
+        diff: bool,
+    },
+
     /// Meeting mode: suppress walks + hide pet (for screen sharing)
     Meeting {
         /// on | off (omit to show current state)
@@ -244,6 +252,7 @@ fn main() {
         Command::Config { op } => commands::config(op),
         Command::Character { op } => commands::character(op),
         Command::Meeting { state } => commands::meeting(state),
+        Command::Probe { diff } => commands::probe(diff),
         Command::Pet { character, stop } => commands::pet(character, stop),
         Command::Doctor => commands::doctor(),
         Command::Logs { lines } => commands::logs(lines),

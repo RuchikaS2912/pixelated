@@ -850,6 +850,70 @@ fn copy_dir(src: &std::path::Path, dst: &std::path::Path) -> Result<(), String> 
 }
 
 // ---------------------------------------------------------------------------
+// meeting probe (find in-call process markers)
+// ---------------------------------------------------------------------------
+
+pub fn probe(diff: bool) -> i32 {
+    let home = home();
+    let dir = home.logs_dir().join("probes");
+    if diff {
+        let mut snaps: Vec<_> = std::fs::read_dir(&dir)
+            .map(|rd| {
+                rd.flatten()
+                    .map(|e| e.path())
+                    .filter(|p| p.extension().map(|e| e == "txt").unwrap_or(false))
+                    .collect()
+            })
+            .unwrap_or_default();
+        snaps.sort();
+        if snaps.len() < 2 {
+            ui::fail("need two snapshots: run `dribble probe` once idle, once in a call");
+            return 1;
+        }
+        let older = std::fs::read_to_string(&snaps[snaps.len() - 2]).unwrap_or_default();
+        let newer = std::fs::read_to_string(&snaps[snaps.len() - 1]).unwrap_or_default();
+        let old_set: std::collections::BTreeSet<&str> =
+            older.lines().map(|l| l.trim_end()).collect();
+        ui::header("Appeared during the call");
+        println!();
+        let mut found = 0;
+        for line in newer.lines() {
+            let line = line.trim_end();
+            if !old_set.contains(line) && !line.is_empty() {
+                println!("  {line}");
+                found += 1;
+            }
+        }
+        if found == 0 {
+            println!("{}", ui::dim("  no new processes — markers may be window- or API-level"));
+        }
+        return 0;
+    }
+
+    std::fs::create_dir_all(&dir).ok();
+    let stamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
+    let path = dir.join(format!("{stamp}.txt"));
+    let ps = std::process::Command::new("ps")
+        .args(["-Ao", "command="])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
+        .unwrap_or_default();
+    let cam = std::process::Command::new("ioreg")
+        .args(["-r", "-c", "AppleH16CamIn"])
+        .output()
+        .map(|o| String::from_utf8_lossy(&o.stdout).to_string())
+        .unwrap_or_default();
+    let body = format!("{ps}\n--- camera ioreg ---\n{cam}");
+    if let Err(e) = std::fs::write(&path, body) {
+        ui::fail(&e.to_string());
+        return 1;
+    }
+    ui::success(&format!("snapshot saved: {}", path.display()));
+    println!("{}", ui::dim("  now join your Teams call / Slack huddle, then run `dribble probe --diff`"));
+    0
+}
+
+// ---------------------------------------------------------------------------
 // meeting mode
 // ---------------------------------------------------------------------------
 
