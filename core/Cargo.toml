@@ -1,0 +1,16 @@
+[package]
+name = "wremind-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Walking Reminder core engine: reminders, scheduling, persistence"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+chrono-tz.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,9 @@
+{
+  "description": "Custom character (teal #10)",
+  "frameRate": 10,
+  "frames": 6,
+  "height": 144,
+  "name": "footballer",
+  "walkingSpeed": 110,
+  "width": 144
+}

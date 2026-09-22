@@ -1,0 +1,20 @@
+[package]
+name = "wremind-daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Walking Reminder background daemon"
+
+[dependencies]
+wremind-core = { path = "../core" }
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+thiserror.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3"
+chrono-tz = "0.10"

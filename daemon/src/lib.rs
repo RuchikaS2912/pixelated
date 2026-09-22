@@ -1,0 +1,14 @@
+//! Walking Reminder daemon: a small background process that
+//! loads reminder configuration, maintains the scheduler, triggers
+//! reminders, and launches the visual overlay renderer.
+//!
+//! Idle cost is a 1s poll loop (~0% CPU). The renderer runs as a
+//! separate short-lived process, so the daemon itself stays tiny.
+
+pub mod ipc;
+pub mod queue;
+pub mod runner;
+pub mod spawn;
+pub mod startup;
+
+pub use runner::run;

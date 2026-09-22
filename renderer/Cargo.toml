@@ -1,0 +1,58 @@
+[package]
+name = "wremind-render"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Walking Reminder visual renderer: transparent overlay, walking character, speech bubble"
+
+[dependencies]
+wremind-core = { path = "../core" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+rand = "0.8"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3", features = [
+    "NSApplication",
+    "NSBezierPath",
+    "NSColor",
+    "NSImage",
+    "NSScreen",
+    "NSView",
+    "NSWindow",
+    "NSGraphics",
+    "NSEvent",
+    "NSSound",
+    "NSResponder",
+    "NSFont",
+    "NSParagraphStyle",
+    "NSAttributedString",
+    "NSRunningApplication",
+    "NSAffineTransform",
+    "NSStringDrawing",
+    "NSBitmapImageRep",
+    "NSGraphicsContext",
+] }
+objc2-foundation = { version = "0.3", features = [
+    "NSString",
+    "NSData",
+    "NSValue",
+    "NSRange",
+    "NSGeometry",
+    "NSThread",
+    "NSBundle",
+    "NSProcessInfo",
+    "NSTimer",
+    "NSAffineTransform",
+    "NSAttributedString",
+    "NSDictionary",
+    "NSArray",
+    "NSObject",
+    "NSRunLoop",
+] }
+block2 = "0.6"
+
+[dev-dependencies]
+tempfile = "3"

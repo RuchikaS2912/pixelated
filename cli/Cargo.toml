@@ -1,0 +1,27 @@
+[package]
+name = "walking-reminder"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "A tiny companion that walks across your screen to remind you of things"
+repository.workspace = true
+
+[[bin]]
+name = "walking-reminder"
+path = "src/main.rs"
+
+[dependencies]
+wremind-core = { path = "../core" }
+wremind-daemon = { path = "../daemon" }
+wremind-render = { path = "../renderer" }
+clap = { version = "4", features = ["derive"] }
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+chrono-tz.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile = "3"
+predicates = "3"
+assert_cmd = "2"

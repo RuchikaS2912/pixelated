@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = [
+    "core",
+    "daemon",
+    "renderer",
+    "cli",
+    "tools/character-gen",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Walking Reminder contributors"]
+repository = "https://github.com/RuchikaS2912/pixelated"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+chrono-tz = { version = "0.10", features = ["serde"] }
+thiserror = "2"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
