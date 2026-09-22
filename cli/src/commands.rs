@@ -835,34 +835,40 @@ fn copy_dir(src: &std::path::Path, dst: &std::path::Path) -> Result<(), String> 
 // desktop pet
 // ---------------------------------------------------------------------------
 
-pub fn pet(character: Option<String>, stop: bool) -> i32 {
-    let home = home();
-    if stop {
-        let pid_file = home.root().join("pet.pid");
-        match std::fs::read_to_string(&pid_file)
+/// Stop every running desktop pet. Discovery is by command line (robust
+/// against stale/missing pet.pid), not by pid file alone.
+pub fn kill_pets() {
+    #[cfg(unix)]
+    {
+        let _ = std::process::Command::new("pkill")
+            .arg("-f")
+            .arg("walking-reminder __pet")
+            .output();
+    }
+    #[cfg(not(unix))]
+    {
+        let home = home();
+        if let Some(pid) = std::fs::read_to_string(home.root().join("pet.pid"))
             .ok()
             .and_then(|s| s.trim().parse::<u32>().ok())
         {
-            Some(pid) => {
-                let _ = std::process::Command::new("kill").arg(pid.to_string()).output();
-                let _ = std::fs::remove_file(&pid_file);
-                ui::success("Desktop pet stopped");
-                return 0;
-            }
-            None => {
-                ui::warn("No desktop pet running");
-                return 0;
-            }
+            let _ = std::process::Command::new("taskkill")
+                .args(["/PID", &pid.to_string(), "/F"])
+                .output();
         }
     }
+    let _ = std::fs::remove_file(home().root().join("pet.pid"));
+}
 
-    // Replace any existing pet.
-    if let Some(pid) = std::fs::read_to_string(home.root().join("pet.pid"))
-        .ok()
-        .and_then(|s| s.trim().parse::<u32>().ok())
-    {
-        let _ = std::process::Command::new("kill").arg(pid.to_string()).output();
+pub fn pet(character: Option<String>, stop: bool) -> i32 {
+    if stop {
+        kill_pets();
+        ui::success("Desktop pet stopped");
+        return 0;
     }
+
+    // Replace any existing pet (also cleans up orphans).
+    kill_pets();
 
     let Ok(home) = ensure_ready() else {
         return 1;
