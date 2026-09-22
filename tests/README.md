@@ -13,14 +13,14 @@ Tests live inside each crate (standard Cargo layout):
   walk-plan math
 - `cli/tests/cli.rs` — end-to-end CLI suite against the real binary:
   every command, plus full daemon start → reminder fires (headless,
-  WALKING_REMINDER_NO_RENDER=1) → stop cycles
+  DRIBBLE_NO_RENDER=1) → stop cycles
 
 Run everything headless:
 
-    WALKING_REMINDER_NO_RENDER=1 cargo test --workspace
+    DRIBBLE_NO_RENDER=1 cargo test --workspace
 
 On macOS you can additionally verify the real overlay visually:
 
-    ./target/release/walking-reminder test
+    ./target/release/dribble test
     # or render one frame to a file:
-    walking-reminder __render --message "hi" --screenshot frame.png
+    dribble __render --message "hi" --screenshot frame.png

@@ -1,5 +1,5 @@
 //! Renderer process spawning. The renderer is a separate short-lived
-//! process (`walking-reminder __render ...`) so overlay crashes can
+//! process (`dribble __render ...`) so overlay crashes can
 //! never take the daemon down, and idle memory stays flat.
 
 use std::process::{Child, Command, Stdio};
@@ -22,7 +22,7 @@ impl RendererPool {
         self.children.len()
     }
 
-    /// Spawn a renderer for one animation. `bin` is the walking-reminder
+    /// Spawn a renderer for one animation. `bin` is the dribble
     /// executable path.
     pub fn spawn(&mut self, bin: &std::path::Path, item: &PendingShow) -> std::io::Result<()> {
         let mut cmd = Command::new(bin);
@@ -38,7 +38,7 @@ impl RendererPool {
             cmd.args(["--character", character]);
         }
         // Headless/test mode: suppress the actual overlay.
-        if std::env::var_os("WALKING_REMINDER_NO_RENDER").is_some() {
+        if std::env::var_os("DRIBBLE_NO_RENDER").or_else(|| std::env::var_os("WALKING_REMINDER_NO_RENDER")).is_some() {
             cmd.arg("--no-render");
         }
         let child = cmd.spawn()?;

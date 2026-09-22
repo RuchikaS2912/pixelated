@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 
-pub const LABEL: &str = "com.walking-reminder.daemon";
+pub const LABEL: &str = "com.dribble.daemon";
 
 pub struct StartupStatus {
     pub enabled: bool,
@@ -108,9 +108,9 @@ pub fn enable(bin: &std::path::Path) -> Result<(), String> {
     let home = std::env::var_os("HOME").ok_or("HOME not set")?;
     let dir = PathBuf::from(home).join(".config/autostart");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let path = dir.join("walking-reminder.desktop");
+    let path = dir.join("dribble.desktop");
     let content = format!(
-        "[Desktop Entry]\nType=Application\nName=Walking Reminder\nExec={} __daemon\nX-GNOME-Autostart-enabled=true\n",
+        "[Desktop Entry]\nType=Application\nName=Dribble\nExec={} __daemon\nX-GNOME-Autostart-enabled=true\n",
         bin.display()
     );
     std::fs::write(path, content).map_err(|e| e.to_string())
@@ -121,7 +121,7 @@ pub fn disable() -> Result<(), String> {
     let home = std::env::var_os("HOME").ok_or("HOME not set")?;
     let _ = std::fs::remove_file(
         PathBuf::from(home)
-            .join(".config/autostart/walking-reminder.desktop"),
+            .join(".config/autostart/dribble.desktop"),
     );
     Ok(())
 }
@@ -129,7 +129,7 @@ pub fn disable() -> Result<(), String> {
 #[cfg(target_os = "linux")]
 pub fn status() -> StartupStatus {
     let home = std::env::var_os("HOME").unwrap_or_default();
-    let path = PathBuf::from(home).join(".config/autostart/walking-reminder.desktop");
+    let path = PathBuf::from(home).join(".config/autostart/dribble.desktop");
     StartupStatus { enabled: path.exists(), detail: path.display().to_string() }
 }
 

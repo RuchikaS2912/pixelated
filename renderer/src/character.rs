@@ -91,7 +91,7 @@ pub struct Character {
 
 #[derive(Debug, thiserror::Error)]
 pub enum CharacterError {
-    #[error("character '{0}' not found in {1} (run `walking-reminder character list`)")]
+    #[error("character '{0}' not found in {1} (run `dribble character list`)")]
     NotFound(String, String),
     #[error("invalid character.json in {0}: {1}")]
     InvalidManifest(String, String),

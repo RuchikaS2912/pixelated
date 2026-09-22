@@ -1,4 +1,4 @@
-//! Walking Reminder core engine.
+//! Dribble core engine.
 //!
 //! This crate is a pure library: reminders, recurrence computation,
 //! persistence and configuration. It knows nothing about the CLI, the

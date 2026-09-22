@@ -1,8 +1,8 @@
 //! End-to-end CLI tests (requirement 25): every major command runs
-//! against a temporary WALKING_REMINDER_HOME. The real binary is used
-//! (CARGO_BIN_EXE_walking-reminder), including a full daemon
+//! against a temporary DRIBBLE_HOME. The real binary is used
+//! (CARGO_BIN_EXE_dribble), including a full daemon
 //! start/trigger/stop cycle with rendering suppressed
-//! (WALKING_REMINDER_NO_RENDER=1) so CI stays headless.
+//! (DRIBBLE_NO_RENDER=1) so CI stays headless.
 
 use std::path::PathBuf;
 use std::process::Command;
@@ -12,9 +12,9 @@ use predicates::str::{contains, is_empty};
 use predicates::boolean::PredicateBooleanExt;
 
 fn bin() -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_walking-reminder"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_dribble"));
     // Headless: the daemon spawns renderers as `--no-render`.
-    cmd.env("WALKING_REMINDER_NO_RENDER", "1");
+    cmd.env("DRIBBLE_NO_RENDER", "1");
     cmd
 }
 
@@ -27,7 +27,7 @@ impl TempHome {
     }
     fn cmd(&self) -> Command {
         let mut c = bin();
-        c.env("WALKING_REMINDER_HOME", self.0.path());
+        c.env("DRIBBLE_HOME", self.0.path());
         c
     }
     fn path(&self) -> &std::path::Path {
@@ -44,7 +44,7 @@ fn version_works() {
         .arg("--version")
         .assert()
         .success()
-        .stdout(contains("walking-reminder"));
+        .stdout(contains("dribble"));
 }
 
 #[test]
@@ -251,7 +251,7 @@ fn daemon_fires_interval_reminder() {
         std::fs::read_to_string(h.path().join("state.json")).expect("state.json");
     assert!(state.contains("\"last_fired\""), "state: {state}");
 
-    let log = std::fs::read_to_string(h.path().join("logs/walking-reminder.log"))
+    let log = std::fs::read_to_string(h.path().join("logs/dribble.log"))
         .expect("daemon log");
     assert!(
         log.contains("reminder 1 triggered: ⏱ Tick") || log.contains("triggered"),
@@ -302,7 +302,7 @@ fn reminders_survive_restart() {
 #[test]
 fn pet_command_and_stop() {
     let h = TempHome::new();
-    // Headless (WALKING_REMINDER_NO_RENDER=1 is inherited from bin()):
+    // Headless (DRIBBLE_NO_RENDER=1 is inherited from bin()):
     // the pet process validates and exits; pid file semantics still work.
     h.cmd().args(["pet"]).assert().success();
     h.cmd().args(["pet", "--stop"]).assert().stdout(contains("pet"));
@@ -312,7 +312,7 @@ fn pet_command_and_stop() {
 fn no_render_flag_validates_headless() {
     let h = TempHome::new();
     let mut c = h.cmd();
-    c.env_remove("WALKING_REMINDER_NO_RENDER");
+    c.env_remove("DRIBBLE_NO_RENDER");
     c.args([
         "__render",
         "--message",

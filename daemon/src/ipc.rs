@@ -1,4 +1,4 @@
-//! Local IPC over a Unix domain socket (`~/.walking-reminder/daemon.sock`).
+//! Local IPC over a Unix domain socket (`~/.dribble/daemon.sock`).
 //!
 //! Protocol: one JSON request per connection, one JSON response.
 //! This is the future seam for a richer local API (`serve`): the CLI,
@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "cmd", rename_all = "lowercase")]
 pub enum Request {
-    /// Liveness + info probe from `walking-reminder status`.
+    /// Liveness + info probe from `dribble status`.
     Ping,
-    /// Trigger a test walk immediately (from `walking-reminder test`).
+    /// Trigger a test walk immediately (from `dribble test`).
     Show { message: String, character: Option<String> },
-    /// Graceful shutdown (from `walking-reminder stop`).
+    /// Graceful shutdown (from `dribble stop`).
     Stop,
 }
 

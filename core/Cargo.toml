@@ -3,7 +3,7 @@ name = "wremind-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Walking Reminder core engine: reminders, scheduling, persistence"
+description = "Dribble core engine: reminders, scheduling, persistence"
 
 [dependencies]
 serde.workspace = true

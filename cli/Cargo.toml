@@ -1,5 +1,5 @@
 [package]
-name = "walking-reminder"
+name = "dribble"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,7 +7,7 @@ description = "A tiny companion that walks across your screen to remind you of t
 repository.workspace = true
 
 [[bin]]
-name = "walking-reminder"
+name = "dribble"
 path = "src/main.rs"
 
 [dependencies]

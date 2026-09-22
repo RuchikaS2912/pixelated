@@ -1,10 +1,10 @@
 # macOS integration
 
 The daemon is started at login via a **LaunchAgent** (no admin/root
-required). `walking-reminder enable` writes:
+required). `dribble enable` writes:
 
 ```
-~/Library/LaunchAgents/com.walking-reminder.daemon.plist
+~/Library/LaunchAgents/com.dribble.daemon.plist
 ```
 
 Template (rendered by the CLI with the real binary path):
@@ -15,10 +15,10 @@ Template (rendered by the CLI with the real binary path):
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.walking-reminder.daemon</string>
+    <string>com.dribble.daemon</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/walking-reminder</string>
+        <string>/usr/local/bin/dribble</string>
         <string>__daemon</string>
     </array>
     <key>RunAtLoad</key>
@@ -29,6 +29,6 @@ Template (rendered by the CLI with the real binary path):
 </plist>
 ```
 
-`KeepAlive` is intentionally off so `walking-reminder stop` means stop.
+`KeepAlive` is intentionally off so `dribble stop` means stop.
 The overlay renderer is a plain NSWindow process — it needs no Screen
 Recording, Accessibility, or Full Disk Access permissions.

@@ -3,7 +3,7 @@ name = "wremind-daemon"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Walking Reminder background daemon"
+description = "Dribble background daemon"
 
 [dependencies]
 wremind-core = { path = "../core" }

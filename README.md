@@ -42,7 +42,7 @@ less install.sh && sh install.sh
 The installer detects your OS + architecture, downloads the right binary,
 verifies its SHA-256 checksum, installs it, and runs a health check.
 
-**On macOS it also installs a real app**: "Walking Reminder" appears in
+**On macOS it also installs a real app**: "Dribble" appears in
 `/Applications` (icon built from your character's sprite) — double-click
 it or find it in Spotlight to start everything after quitting.
 
@@ -57,21 +57,21 @@ cd pixelated
 cargo build --release
 ```
 
-The binary is `target/release/walking-reminder`. To make it available
+The binary is `target/release/dribble`. To make it available
 everywhere:
 
 ```bash
-sudo cp target/release/walking-reminder /usr/local/bin/
+sudo cp target/release/dribble /usr/local/bin/
 ```
 
 ### After installing
 
 ```bash
-walking-reminder --version    # health check
-walking-reminder test         # watch him walk across your screen
+dribble --version    # health check
+dribble test         # watch him walk across your screen
 ```
 
-On macOS, just open **Walking Reminder** from `/Applications` or
+On macOS, just open **Dribble** from `/Applications` or
 Spotlight — the daemon, menu bar item, and desktop pet all come back.
 
 ---
@@ -79,14 +79,14 @@ Spotlight — the daemon, menu bar item, and desktop pet all come back.
 ## Quick start
 
 ```bash
-walking-reminder add "Drink water" --every 1h
-walking-reminder add "Call Mom" --at 19:00
-walking-reminder add "Go running" --days mon,wed,fri --at 18:00
-walking-reminder add "Dentist" --at "2026-10-01 09:00"
+dribble add "Drink water" --every 1h
+dribble add "Call Mom" --at 19:00
+dribble add "Go running" --days mon,wed,fri --at 18:00
+dribble add "Dentist" --at "2026-10-01 09:00"
 
-walking-reminder start         # start the background daemon
-walking-reminder enable        # start automatically at login
-walking-reminder status
+dribble start         # start the background daemon
+dribble enable        # start automatically at login
+dribble status
 ```
 
 An hour later, your character walks across your desktop:
@@ -101,18 +101,18 @@ While the daemon runs, a small ⚽ sits in your menu bar:
 - **Walk now** — he crosses the screen immediately
 - **Pause / Resume all reminders**
 - **Show / Hide desktop pet**
-- **Quit Walking Reminder** — no terminal needed
+- **Quit Dribble** — no terminal needed
 
 The list refreshes every time you open the menu.
 
 ### The desktop pet
 
 ```bash
-walking-reminder pet           # he appears on your screen
+dribble pet           # he appears on your screen
 ```
 
 - **Drag** him anywhere — position is remembered
-- **Right-click** him (or `walking-reminder pet --stop`) to dismiss
+- **Right-click** him (or `dribble pet --stop`) to dismiss
 - He idles with a little animation while reminders still walk by on schedule
 
 ## Commands
@@ -134,10 +134,10 @@ walking-reminder pet           # he appears on your screen
 
 ## Configuration
 
-Everything lives in `~/.walking-reminder/`:
+Everything lives in `~/.dribble/`:
 
 ```
-~/.walking-reminder/
+~/.dribble/
 ├── config.json      # settings
 ├── reminders.json   # your reminders
 ├── state.json       # runtime bookkeeping
@@ -146,10 +146,10 @@ Everything lives in `~/.walking-reminder/`:
 ```
 
 ```bash
-walking-reminder config set speed 60         # px/sec (lower = slower stroll)
-walking-reminder config set size 240         # bigger character
-walking-reminder config set sound true       # soft sound with each walk
-walking-reminder config set direction random # left | right | random
+dribble config set speed 60         # px/sec (lower = slower stroll)
+dribble config set size 240         # bigger character
+dribble config set sound true       # soft sound with each walk
+dribble config set direction random # left | right | random
 ```
 
 ## Custom characters
@@ -169,9 +169,9 @@ Create a pixel-art sprite sheet of a walking character.
 Then:
 
 ```bash
-walking-reminder character import ~/Desktop/my-character/
-walking-reminder character set my-character
-walking-reminder test --character my-character
+dribble character import ~/Desktop/my-character/
+dribble character set my-character
+dribble test --character my-character
 ```
 
 See [docs/CHARACTERS.md](docs/CHARACTERS.md) for the manifest format.
@@ -197,8 +197,8 @@ wake. Full details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ·
 
 ```bash
 cargo build --release
-WALKING_REMINDER_NO_RENDER=1 cargo test --workspace
-./target/release/walking-reminder test
+DRIBBLE_NO_RENDER=1 cargo test --workspace
+./target/release/dribble test
 
 cargo run -p character-gen         # regenerate the bundled sprite pack
 ```

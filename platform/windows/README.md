@@ -3,7 +3,7 @@
 Startup at login will use the **per-user Startup folder** (no admin):
 
 ```
-%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\walking-reminder.cmd
+%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\dribble.cmd
 ```
 
 or the per-user Run registry key:

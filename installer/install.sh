@@ -1,5 +1,5 @@
 #!/bin/sh
-# Walking Reminder installer.
+# Dribble installer.
 #
 # Usage:
 #   curl -fsSL https://your-domain.com/install.sh | sh
@@ -11,10 +11,10 @@
 # Steps: detect OS + arch -> download release artifact over HTTPS ->
 # verify SHA256 -> install binary -> health check. The binary is
 # self-contained: default character assets are embedded and extracted
-# to ~/.walking-reminder/characters on first run.
+# to ~/.dribble/characters on first run.
 #
 # Overrides:
-#   REPO=owner/walking-reminder  GitHub repo to download from
+#   REPO=owner/dribble  GitHub repo to download from
 #   VERSION=v0.1.0               specific release tag (default: latest)
 #   INSTALL_DIR=~/.local/bin     install destination
 
@@ -64,8 +64,8 @@ trap 'rm -rf "$TMP"' EXIT
 
 BASE="${BASE:-https://github.com/$REPO/releases/download/$VERSION}"
 case "$OS" in
-  macos) ASSET="walking-reminder-$VERSION-$OS-$ARCH.tar.gz" ;;
-  linux) ASSET="walking-reminder-$VERSION-$OS-$ARCH.tar.gz" ;;
+  macos) ASSET="dribble-$VERSION-$OS-$ARCH.tar.gz" ;;
+  linux) ASSET="dribble-$VERSION-$OS-$ARCH.tar.gz" ;;
 esac
 
 $FETCH -o "$TMP/$ASSET" "$BASE/$ASSET" || die "download failed: $BASE/$ASSET"
@@ -89,32 +89,32 @@ log "checksum verified"
 
 # ---------------------------------------------------------------- install
 tar -xzf "$TMP/$ASSET" -C "$TMP" --strip-components=1
-BIN="$TMP/walking-reminder"
-[ -f "$BIN" ] || die "archive did not contain the walking-reminder binary"
+BIN="$TMP/dribble"
+[ -f "$BIN" ] || die "archive did not contain the dribble binary"
 
 # Stop any running instance first: replacing a binary that is currently
 # executing poisons its code-signature validation on macOS (SIGKILLs).
-pkill -f "walking-reminder __daemon" 2>/dev/null || true
-pkill -f "walking-reminder __pet" 2>/dev/null || true
+pkill -f "dribble __daemon" 2>/dev/null || true
+pkill -f "dribble __pet" 2>/dev/null || true
 sleep 1
 
 mkdir -p "$INSTALL_DIR"
-rm -f "$INSTALL_DIR/walking-reminder"
-if cp "$BIN" "$INSTALL_DIR/walking-reminder" 2>/dev/null; then
+rm -f "$INSTALL_DIR/dribble"
+if cp "$BIN" "$INSTALL_DIR/dribble" 2>/dev/null; then
   :
 else
   # Destination not user-writable: try /usr/local/bin with sudo.
   warn "$INSTALL_DIR not writable; trying /usr/local/bin with sudo"
   sudo mkdir -p /usr/local/bin
-  sudo rm -f /usr/local/bin/walking-reminder
-  sudo cp "$BIN" /usr/local/bin/walking-reminder
+  sudo rm -f /usr/local/bin/dribble
+  sudo cp "$BIN" /usr/local/bin/dribble
   INSTALL_DIR="/usr/local/bin"
 fi
-chmod +x "$INSTALL_DIR/walking-reminder"
+chmod +x "$INSTALL_DIR/dribble"
 if command -v codesign >/dev/null 2>&1; then
-  codesign -s - --force "$INSTALL_DIR/walking-reminder" >/dev/null 2>&1 || true
+  codesign -s - --force "$INSTALL_DIR/dribble" >/dev/null 2>&1 || true
 fi
-log "installed to $INSTALL_DIR/walking-reminder"
+log "installed to $INSTALL_DIR/dribble"
 
 case ":$PATH:" in
   *":$INSTALL_DIR:"*) ;;
@@ -123,26 +123,26 @@ case ":$PATH:" in
 esac
 
 # ----------------------------------------------------------- health check
-WR="$INSTALL_DIR/walking-reminder"
+WR="$INSTALL_DIR/dribble"
 "$WR" --version || die "health check failed"
 # doctor validates the install and extracts the bundled character assets
 "$WR" doctor >/dev/null 2>&1 || true
 log "health check passed: $("$WR" --version | head -1)"
 
 # ---------------------------------------------------- macOS: install as app
-# Double-clickable "Walking Reminder" in /Applications (agent app: starts
+# Double-clickable "Dribble" in /Applications (agent app: starts
 # the daemon quietly, no Dock icon). Spotlight finds it too.
 if [ "$OS" = "macos" ]; then
   APP_PARENT="${APP_DIR:-/Applications}"
   [ -d "$APP_PARENT" ] && [ -w "$APP_PARENT" ] || APP_PARENT="$HOME/Applications"
   mkdir -p "$APP_PARENT" 2>/dev/null || APP_PARENT="$HOME/Applications"
-  APP="$APP_PARENT/Walking Reminder.app"
+  APP="$APP_PARENT/Dribble.app"
   rm -rf "$APP"
   mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
   cat > "$APP/Contents/MacOS/WalkingReminder" <<LAUNCHER
 #!/bin/sh
-exec "$INSTALL_DIR/walking-reminder" start
+exec "$INSTALL_DIR/dribble" start
 LAUNCHER
   chmod +x "$APP/Contents/MacOS/WalkingReminder"
 
@@ -152,11 +152,11 @@ LAUNCHER
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Walking Reminder</string>
+    <string>Dribble</string>
     <key>CFBundleDisplayName</key>
-    <string>Walking Reminder</string>
+    <string>Dribble</string>
     <key>CFBundleIdentifier</key>
-    <string>com.walking-reminder.app</string>
+    <string>com.dribble.app</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleShortVersionString</key>
@@ -175,8 +175,8 @@ PLIST
   # then the bundled default). Skipped gracefully if tools are missing.
   SPRITE=""
   for cand in \
-    "$HOME/.walking-reminder/characters/$(python3 -c "import json;print(json.load(open('$HOME/.walking-reminder/config.json')).get('character',''))" 2>/dev/null)/walk_01.png" \
-    "$HOME/.walking-reminder/characters/footballer/walk_01.png"; do
+    "$HOME/.dribble/characters/$(python3 -c "import json;print(json.load(open('$HOME/.dribble/config.json')).get('character',''))" 2>/dev/null)/walk_01.png" \
+    "$HOME/.dribble/characters/footballer/walk_01.png"; do
     [ -f "$cand" ] && SPRITE="$cand" && break
   done
   if [ -n "$SPRITE" ] && command -v iconutil >/dev/null 2>&1 && command -v sips >/dev/null 2>&1; then
@@ -190,13 +190,13 @@ PLIST
       plutil -insert CFBundleIconFile -string "AppIcon" "$APP/Contents/Info.plist" >/dev/null 2>&1 || true
     fi
   fi
-  log "app installed: $APP (double-click or Spotlight: \"Walking Reminder\")"
+  log "app installed: $APP (double-click or Spotlight: \"Dribble\")"
 fi
 
-printf '\n\033[1mWalking Reminder is installed!\033[0m\n\n'
+printf '\n\033[1mDribble is installed!\033[0m\n\n'
 cat <<'EOF'
-  walking-reminder add "Drink water" --every 1h
-  walking-reminder test        # watch the character walk across your screen
-  walking-reminder start       # start the background daemon
-  walking-reminder enable      # start automatically at login
+  dribble add "Drink water" --every 1h
+  dribble test        # watch the character walk across your screen
+  dribble start       # start the background daemon
+  dribble enable      # start automatically at login
 EOF

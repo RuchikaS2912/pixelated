@@ -182,11 +182,11 @@ impl MenuTarget {
         );
         let header = match next {
             Some((r, t)) => format!(
-                "Walking Reminder — next: {} in {}",
+                "Dribble — next: {} in {}",
                 r.title,
                 wremind_core::util::humanize_duration_short((t - now).num_seconds())
             ),
-            None => "Walking Reminder".to_string(),
+            None => "Dribble".to_string(),
         };
         let status_line = menu_item(mtm, &header, None, self);
         status_line.setEnabled(false);
@@ -262,7 +262,7 @@ impl MenuTarget {
         menu.addItem(&hide);
 
         menu.addItem(&NSMenuItem::separatorItem(mtm));
-        let quit = menu_item(mtm, "Quit Walking Reminder", Some(objc2::sel!(quit:)), self);
+        let quit = menu_item(mtm, "Quit Dribble", Some(objc2::sel!(quit:)), self);
         menu.addItem(&quit);
     }
 
@@ -305,7 +305,7 @@ pub fn run_menu_bar(shared: Arc<Shared>, bin: std::path::PathBuf, home: Home) {
     // Accessory: no Dock icon, but a legitimate menu-bar agent.
     app.setActivationPolicy(NSApplicationActivationPolicy::Accessory);
 
-    // Stop watcher: `walking-reminder stop` (IPC thread) only sets a flag;
+    // Stop watcher: `dribble stop` (IPC thread) only sets a flag;
     // the AppKit run loop must be ended from the main thread.
     {
         let shared_watcher = shared.clone();
@@ -349,7 +349,7 @@ pub fn run_menu_bar(shared: Arc<Shared>, bin: std::path::PathBuf, home: Home) {
         unsafe {
             let _: () = msg_send![
                 &*button,
-                setToolTip: &*NSString::from_str("Walking Reminder")
+                setToolTip: &*NSString::from_str("Dribble")
             ];
         }
     }

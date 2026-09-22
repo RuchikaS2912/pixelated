@@ -1,10 +1,10 @@
 # Linux integration
 
 Startup at login uses **XDG autostart** (works on GNOME, KDE, and most
-desktop environments). `walking-reminder enable` writes:
+desktop environments). `dribble enable` writes:
 
 ```
-~/.config/autostart/walking-reminder.desktop
+~/.config/autostart/dribble.desktop
 ```
 
 Template:
@@ -12,8 +12,8 @@ Template:
 ```ini
 [Desktop Entry]
 Type=Application
-Name=Walking Reminder
-Exec=/usr/local/bin/walking-reminder __daemon
+Name=Dribble
+Exec=/usr/local/bin/dribble __daemon
 X-GNOME-Autostart-enabled=true
 ```
 
@@ -21,22 +21,22 @@ On systemd-based compositors you can also use a **user service**
 (no root needed):
 
 ```
-~/.config/systemd/user/walking-reminder.service
+~/.config/systemd/user/dribble.service
 ```
 
 ```ini
 [Unit]
-Description=Walking Reminder daemon
+Description=Dribble daemon
 
 [Service]
-ExecStart=%h/.local/bin/walking-reminder __daemon
+ExecStart=%h/.local/bin/dribble __daemon
 Restart=on-failure
 
 [Install]
 WantedBy=default.target
 ```
 
-Then: `systemctl --user enable --now walking-reminder`
+Then: `systemctl --user enable --now dribble`
 
 ## Overlay status
 

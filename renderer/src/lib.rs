@@ -1,8 +1,8 @@
-//! Walking Reminder renderer.
+//! Dribble renderer.
 //!
 //! The renderer receives a reminder event (message + character) and
 //! decides how to display it. It runs as a short-lived process spawned
-//! by the daemon (or directly by `walking-reminder test`), so idle
+//! by the daemon (or directly by `dribble test`), so idle
 //! memory usage is zero: the overlay only exists for the ~8s walk.
 
 pub mod anim;
@@ -27,7 +27,7 @@ pub struct ShowOptions {
     pub sound: bool,
 }
 
-/// Entry point used by `walking-reminder __render` and `walking-reminder test`.
+/// Entry point used by `dribble __render` and `dribble test`.
 ///
 /// `character_name` resolves against the home characters dir; the bundled
 /// default is auto-extracted on first run.

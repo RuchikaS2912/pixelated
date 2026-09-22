@@ -35,21 +35,21 @@ jobs:
           echo 'CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc' >> "$GITHUB_ENV"
 
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }} --bin walking-reminder
+        run: cargo build --release --target ${{ matrix.target }} --bin dribble
 
       - name: Test (native targets)
         if: ${{ !matrix.cross }}
         env:
-          WALKING_REMINDER_NO_RENDER: "1"
+          DRIBBLE_NO_RENDER: "1"
         run: cargo test --workspace
 
       - name: Package (unix)
         if: matrix.os != 'windows-latest'
         run: |
           VERSION="${GITHUB_REF_NAME:-dev}"
-          STAGE="walking-reminder-$VERSION-${{ matrix.suffix }}"
+          STAGE="dribble-$VERSION-${{ matrix.suffix }}"
           mkdir -p "$STAGE"
-          cp "target/${{ matrix.target }}/release/walking-reminder" "$STAGE/"
+          cp "target/${{ matrix.target }}/release/dribble" "$STAGE/"
           cp installer/install.sh "$STAGE/"
           cp README.md LICENSE "$STAGE/" 2>/dev/null || true
           tar -czf "$STAGE.tar.gz" "$STAGE"
@@ -60,9 +60,9 @@ jobs:
         shell: pwsh
         run: |
           $VERSION = ${env:GITHUB_REF_NAME}
-          $STAGE = "walking-reminder-$VERSION-${{ matrix.suffix }}"
+          $STAGE = "dribble-$VERSION-${{ matrix.suffix }}"
           New-Item -ItemType Directory -Force $STAGE | Out-Null
-          Copy-Item "target/${{ matrix.target }}/release/walking-reminder.exe" $STAGE/
+          Copy-Item "target/${{ matrix.target }}/release/dribble.exe" $STAGE/
           Compress-Archive -Path $STAGE -DestinationPath "$STAGE.zip"
           $hash = (Get-FileHash "$STAGE.zip" -Algorithm SHA256).Hash.ToLower()
           "$hash  $STAGE.zip" | Out-File -Append -Encoding ascii SHA256SUMS
@@ -71,7 +71,7 @@ jobs:
         with:
           name: ${{ matrix.suffix }}
           path: |
-            walking-reminder-*
+            dribble-*
             SHA256SUMS
 
   release:
@@ -89,7 +89,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            walking-reminder-*.tar.gz
-            walking-reminder-*.zip
+            dribble-*.tar.gz
+            dribble-*.zip
             SHA256SUMS.merged
           generate_release_notes: true

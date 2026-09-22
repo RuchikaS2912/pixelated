@@ -21,12 +21,12 @@ exists during the ~8-second walk.
 ## Layout
 
 ```
-walking-reminder/
+dribble/
 ├── core/        # wremind-core: Reminder, Schedule, persistence, config
 ├── daemon/      # wremind-daemon: scheduler loop, IPC, autostart
 ├── renderer/    # wremind-render: characters, anim math, platform overlay
 │   └── src/platform/{mod,macos,stub}.rs
-├── cli/         # walking-reminder binary (clap)
+├── cli/         # dribble binary (clap)
 ├── characters/  # bundled original footballer sprite pack (embedded)
 ├── platform/    # OS integration notes/templates (LaunchAgent, XDG, Win32)
 ├── installer/   # install.sh (curl | sh)
@@ -45,7 +45,7 @@ is_due(&reminder, &state, now) -> bool
 ```
 
 The **daemon** says "Reminder triggered: Drink water" and spawns
-`walking-reminder __render --message "💧 Drink water!"`. The
+`dribble __render --message "💧 Drink water!"`. The
 **renderer** decides what that looks like. You could replace the
 renderer with a notification, a sound, a e-ink e-ink friend, anything —
 the engine would not change.
@@ -65,7 +65,7 @@ the engine would not change.
 - Single instance: `flock` on `daemon.lock`.
 - IPC: Unix domain socket (`daemon.sock`), JSON-lines protocol:
   `ping`, `show`, `stop`. This is the seam for a future
-  `walking-reminder serve` / local API — no network server in the MVP.
+  `dribble serve` / local API — no network server in the MVP.
 
 ## Renderer (macOS)
 
@@ -108,7 +108,7 @@ Clock-rollback clamps anchors to `now`.
 
 ## Future API
 
-`walking-reminder serve` would expose the existing IPC protocol over a
+`dribble serve` would expose the existing IPC protocol over a
 local socket to other applications (`scheduler.addReminder(...)` style)
 without invoking the CLI. Deliberately not in the MVP; the protocol
 (`daemon/src/ipc.rs`) was designed for it.

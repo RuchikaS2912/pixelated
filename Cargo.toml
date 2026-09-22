@@ -12,7 +12,7 @@ members = [
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-authors = ["Walking Reminder contributors"]
+authors = ["Dribble contributors"]
 repository = "https://github.com/RuchikaS2912/pixelated"
 
 [workspace.dependencies]

@@ -1,4 +1,4 @@
-//! `walking-reminder` — CLI entry point.
+//! `dribble` — CLI entry point.
 //!
 //! The CLI is a thin shell over the core engine (`wremind-core`), the
 //! daemon (`wremind-daemon`) and the renderer (`wremind-render`). It is
@@ -14,7 +14,7 @@ use wremind_core::recurrence::Schedule;
 
 #[derive(Parser)]
 #[command(
-    name = "walking-reminder",
+    name = "dribble",
     version,
     about = "A tiny companion that walks across your screen to remind you of things",
     disable_help_subcommand = true
@@ -145,7 +145,7 @@ enum Command {
     /// Internal: run the daemon (used by `start` and LaunchAgents)
     #[command(hide = true, name = "__daemon")]
     Daemon,
-    /// Internal: run the desktop pet (spawned by `walking-reminder pet`)
+    /// Internal: run the desktop pet (spawned by `dribble pet`)
     #[command(hide = true, name = "__pet")]
     PetProcess {
         #[arg(long)]
@@ -192,7 +192,7 @@ enum CharacterOp {
     Set { name: String },
     /// Show character details
     Show { name: String },
-    /// Import a character directory into ~/.walking-reminder/characters/
+    /// Import a character directory into ~/.dribble/characters/
     Import { path: std::path::PathBuf },
 }
 

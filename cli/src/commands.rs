@@ -163,12 +163,12 @@ pub fn list() -> i32 {
     if let Some(note) = recovery {
         ui::warn(&note);
     }
-    ui::header("Walking Reminder");
+    ui::header("Dribble");
     println!();
     if list.reminders.is_empty() {
         println!("{}", ui::dim("  No reminders yet."));
         println!();
-        println!("  Add one:  walking-reminder add \"Drink water\" --every 1h");
+        println!("  Add one:  dribble add \"Drink water\" --every 1h");
         println!();
         return 0;
     }
@@ -381,7 +381,7 @@ pub fn pause(id: Option<u64>, resume: bool) -> i32 {
 // ---------------------------------------------------------------------------
 
 pub fn daemon() -> i32 {
-    let bin = std::env::current_exe().unwrap_or_else(|_| "walking-reminder".into());
+    let bin = std::env::current_exe().unwrap_or_else(|_| "dribble".into());
     match wremind_daemon::run(bin) {
         Ok(()) => 0,
         Err(e) => {
@@ -403,7 +403,7 @@ pub fn start() -> i32 {
             return 0;
         }
     }
-    let bin = std::env::current_exe().unwrap_or_else(|_| "walking-reminder".into());
+    let bin = std::env::current_exe().unwrap_or_else(|_| "dribble".into());
     let mut cmd = std::process::Command::new(bin);
     cmd.arg("__daemon");
     // Detach: new session, no tty, no inherited stdio -> survives terminal close.
@@ -483,7 +483,7 @@ pub fn stop() -> i32 {
 pub fn status() -> i32 {
     let home = home();
     let (list, _) = load_list(&home).unwrap_or_default();
-    ui::header("Walking Reminder");
+    ui::header("Dribble");
     println!();
     let ping = wremind_daemon::ipc::send(
         &home.socket_file(),
@@ -527,7 +527,7 @@ pub fn status() -> i32 {
 }
 
 pub fn enable(on: bool) -> i32 {
-    let bin = std::env::current_exe().unwrap_or_else(|_| "walking-reminder".into());
+    let bin = std::env::current_exe().unwrap_or_else(|_| "dribble".into());
     let result = if on {
         wremind_daemon::startup::enable(&bin)
     } else {
@@ -590,7 +590,7 @@ pub fn test(message: Option<String>, character: Option<String>, direction: Optio
     }
 
     // Otherwise spawn the renderer directly (fire and forget).
-    let bin = std::env::current_exe().unwrap_or_else(|_| "walking-reminder".into());
+    let bin = std::env::current_exe().unwrap_or_else(|_| "dribble".into());
     let mut cmd = std::process::Command::new(bin);
     cmd.args(["__render", "--message", &message, "--character", &character_name]);
     match dir {
@@ -748,7 +748,7 @@ pub fn character(op: CharacterOp) -> i32 {
             println!();
             println!(
                 "  {}",
-                ui::dim("import your own: walking-reminder character import ./my-character/")
+                ui::dim("import your own: dribble character import ./my-character/")
             );
             0
         }
@@ -767,7 +767,7 @@ pub fn character(op: CharacterOp) -> i32 {
             ui::success(&format!("Active character: {name}"));
             println!(
                 "  {}",
-                ui::dim("preview: walking-reminder test --character " ) // trailing space intentional
+                ui::dim("preview: dribble test --character " ) // trailing space intentional
             );
             0
         }
@@ -815,7 +815,7 @@ pub fn character(op: CharacterOp) -> i32 {
             }
             ui::success(&format!("Imported character '{name}'"));
             println!("  {} frames, {} fps", validated.frame_paths.len(), validated.def.frame_rate);
-            println!("  {}", ui::dim(&format!("try: walking-reminder character set {name}")));
+            println!("  {}", ui::dim(&format!("try: dribble character set {name}")));
             0
         }
     }
@@ -842,7 +842,7 @@ pub fn kill_pets() {
     {
         let _ = std::process::Command::new("pkill")
             .arg("-f")
-            .arg("walking-reminder __pet")
+            .arg("dribble __pet")
             .output();
     }
     #[cfg(not(unix))]
@@ -880,10 +880,10 @@ pub fn pet(character: Option<String>, stop: bool) -> i32 {
         return 1;
     }
 
-    let bin = std::env::current_exe().unwrap_or_else(|_| "walking-reminder".into());
+    let bin = std::env::current_exe().unwrap_or_else(|_| "dribble".into());
     let mut cmd = std::process::Command::new(bin);
     cmd.args(["__pet", "--character", &name]);
-    if std::env::var_os("WALKING_REMINDER_NO_RENDER").is_some() {
+    if std::env::var_os("DRIBBLE_NO_RENDER").or_else(|| std::env::var_os("WALKING_REMINDER_NO_RENDER")).is_some() {
         cmd.arg("--no-render");
     }
     #[cfg(unix)]
@@ -897,7 +897,7 @@ pub fn pet(character: Option<String>, stop: bool) -> i32 {
     match cmd.spawn() {
         Ok(_child) => {
             ui::success("Desktop pet is on your screen — drag him anywhere");
-            println!("{}", ui::dim("  right-click him to dismiss · `walking-reminder pet --stop` also works"));
+            println!("{}", ui::dim("  right-click him to dismiss · `dribble pet --stop` also works"));
             0
         }
         Err(e) => {
@@ -923,7 +923,7 @@ pub fn pet_process(character: Option<String>, no_render: bool) -> i32 {
 
 pub fn doctor() -> i32 {
     let home = home();
-    ui::header("Walking Reminder — health check");
+    ui::header("Dribble — health check");
     println!();
     let mut bad = 0;
 
@@ -931,7 +931,7 @@ pub fn doctor() -> i32 {
     report(
         home_ok,
         &format!("home directory ({})", home.root().display()),
-        "cannot create ~/.walking-reminder",
+        "cannot create ~/.dribble",
     );
     bad += !home_ok as i32;
 
@@ -951,7 +951,7 @@ pub fn doctor() -> i32 {
     }
 
     let cfg_ok = Config::load(&home).is_ok();
-    report(cfg_ok, "config.json readable", "config corrupted; run walking-reminder config reset");
+    report(cfg_ok, "config.json readable", "config corrupted; run dribble config reset");
     bad += !cfg_ok as i32;
 
     let running = wremind_daemon::ipc::send(
@@ -966,7 +966,7 @@ pub fn doctor() -> i32 {
             report(true, &format!("daemon running (pid {})", info.pid), "");
         }
         None => {
-            ui::warn("daemon not running — `walking-reminder start`");
+            ui::warn("daemon not running — `dribble start`");
         }
     }
 

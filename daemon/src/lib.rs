@@ -1,4 +1,4 @@
-//! Walking Reminder daemon: a small background process that
+//! Dribble daemon: a small background process that
 //! loads reminder configuration, maintains the scheduler, triggers
 //! reminders, and launches the visual overlay renderer.
 //!

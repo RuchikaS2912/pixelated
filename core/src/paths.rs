@@ -1,8 +1,8 @@
-//! Filesystem layout: everything lives under `~/.walking-reminder/`
-//! (overridable with `WALKING_REMINDER_HOME` for tests and sandboxes).
+//! Filesystem layout: everything lives under `~/.dribble/`
+//! (overridable with `DRIBBLE_HOME` for tests and sandboxes).
 //!
 //! ```text
-//! ~/.walking-reminder/
+//! ~/.dribble/
 //! ├── config.json
 //! ├── reminders.json
 //! ├── state.json
@@ -20,11 +20,11 @@ pub struct Home {
 }
 
 impl Home {
-    /// Resolve the home directory. `WALKING_REMINDER_HOME` overrides the
-    /// default `~/.walking-reminder` (used by tests and power users).
+    /// Resolve the home directory. `DRIBBLE_HOME` overrides the
+    /// default `~/.dribble` (used by tests and power users).
     pub fn resolve() -> Home {
         Home::from_root(
-            std::env::var_os("WALKING_REMINDER_HOME")
+            std::env::var_os("DRIBBLE_HOME")
                 .map(PathBuf::from)
                 .unwrap_or_else(default_root),
         )
@@ -54,7 +54,7 @@ impl Home {
         self.root.join("logs")
     }
     pub fn log_file(&self) -> PathBuf {
-        self.logs_dir().join("walking-reminder.log")
+        self.logs_dir().join("dribble.log")
     }
     pub fn socket_file(&self) -> PathBuf {
         self.root.join("daemon.sock")
@@ -96,7 +96,7 @@ pub(crate) fn default_root() -> PathBuf {
         .or_else(|| std::env::var_os("USERPROFILE"))
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
-    home.join(".walking-reminder")
+    home.join(".dribble")
 }
 
 /// Atomic file write: write to a temp file in the same directory, then rename.

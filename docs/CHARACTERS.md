@@ -4,9 +4,9 @@ A character is a folder with a manifest and one or more transparent PNG
 sprite frames. Install it without touching source code:
 
 ```bash
-walking-reminder character import ./my-character/
-walking-reminder character set my-character
-walking-reminder test --character my-character
+dribble character import ./my-character/
+dribble character set my-character
+dribble test --character my-character
 ```
 
 ## Layout
@@ -64,9 +64,9 @@ The engine has zero Messi-specific code — it only ever reads
 5. Import:
 
 ```bash
-walking-reminder character import ./messi/
-walking-reminder character set messi
-walking-reminder test --character messi
+dribble character import ./messi/
+dribble character set messi
+dribble test --character messi
 ```
 
 The bundled `footballer` is original programmatically-generated pixel

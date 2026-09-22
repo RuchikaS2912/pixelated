@@ -666,7 +666,7 @@ unsafe fn run_pet_inner(character_name: Option<&str>) -> Result<(), String> {
     let view: Retained<PetView> = msg_send![super(alloc), initWithFrame: content_rect];
     window.setContentView(Some(&view));
 
-    // persist pet pid for `walking-reminder pet --stop`
+    // persist pet pid for `dribble pet --stop`
     let _ = std::fs::write(home.root().join("pet.pid"), std::process::id().to_string());
 
     // idle animation: slow in-place cycle
