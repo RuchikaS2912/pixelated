@@ -481,7 +481,6 @@ struct PetIvars {
     frame_idx: std::rc::Rc<std::cell::RefCell<usize>>,
     /// grab offset (screen pt - window origin) while dragging
     grab: std::rc::Rc<std::cell::RefCell<Option<(f64, f64)>>>,
-    home_root: PathBuf,
 }
 
 define_class!(
@@ -556,7 +555,7 @@ define_class!(
             let g = self.ivars().grab.borrow().clone();
             if let Some((dx, dy)) = g {
                 window.setFrameOrigin(NSPoint::new(sp.x - dx, sp.y - dy));
-                unsafe { self.setNeedsDisplay(true) };
+                self.setNeedsDisplay(true);
             }
         }
 
@@ -676,7 +675,7 @@ unsafe fn run_pet_inner(character_name: Option<&str>) -> Result<(), String> {
         let mut idx = frame_idx.borrow_mut();
         *idx = (*idx + 1) % 1_000_000;
         drop(idx);
-        unsafe { view.setNeedsDisplay(true) };
+        view.setNeedsDisplay(true);
     });
     let _timer =
         NSTimer::scheduledTimerWithTimeInterval_repeats_block(1.0 / 3.0, true, &tick);

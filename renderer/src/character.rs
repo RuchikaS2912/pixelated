@@ -151,12 +151,21 @@ impl Character {
         out
     }
 
-    /// Extract the bundled default character into the home dir if absent.
-    /// Runs on every CLI/daemon invocation; cheap when already installed.
+    /// Extract the bundled default character into the home dir when it is
+    /// actually wanted: on a fresh install (no characters at all), or when
+    /// the user's active character IS the default. Prevents the default
+    /// from reappearing after a user deletes it in favor of a custom one.
     pub fn ensure_default(home: &Home) -> std::io::Result<()> {
         let dir = home.character_dir(DEFAULT_CHARACTER);
         if dir.join("character.json").exists() {
             return Ok(());
+        }
+        let active = wremind_core::Config::load(home)
+            .map(|c| c.character)
+            .unwrap_or_else(|_| DEFAULT_CHARACTER.to_string());
+        let any_installed = !Self::list_installed(home).is_empty();
+        if any_installed && active != DEFAULT_CHARACTER {
+            return Ok(()); // user has their own character; stay out of the way
         }
         std::fs::create_dir_all(&dir)?;
         for (name, bytes) in BUNDLED_FILES {
