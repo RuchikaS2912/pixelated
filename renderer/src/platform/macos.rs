@@ -662,7 +662,6 @@ unsafe fn run_pet_inner(character_name: Option<&str>) -> Result<(), String> {
         char_size,
         frame_idx: frame_idx.clone(),
         grab: std::rc::Rc::new(std::cell::RefCell::new(None)),
-        home_root: home.root().to_path_buf(),
     });
     let view: Retained<PetView> = msg_send![super(alloc), initWithFrame: content_rect];
     window.setContentView(Some(&view));
