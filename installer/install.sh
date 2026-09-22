@@ -92,17 +92,28 @@ tar -xzf "$TMP/$ASSET" -C "$TMP" --strip-components=1
 BIN="$TMP/walking-reminder"
 [ -f "$BIN" ] || die "archive did not contain the walking-reminder binary"
 
+# Stop any running instance first: replacing a binary that is currently
+# executing poisons its code-signature validation on macOS (SIGKILLs).
+pkill -f "walking-reminder __daemon" 2>/dev/null || true
+pkill -f "walking-reminder __pet" 2>/dev/null || true
+sleep 1
+
 mkdir -p "$INSTALL_DIR"
+rm -f "$INSTALL_DIR/walking-reminder"
 if cp "$BIN" "$INSTALL_DIR/walking-reminder" 2>/dev/null; then
   :
 else
   # Destination not user-writable: try /usr/local/bin with sudo.
   warn "$INSTALL_DIR not writable; trying /usr/local/bin with sudo"
   sudo mkdir -p /usr/local/bin
+  sudo rm -f /usr/local/bin/walking-reminder
   sudo cp "$BIN" /usr/local/bin/walking-reminder
   INSTALL_DIR="/usr/local/bin"
 fi
 chmod +x "$INSTALL_DIR/walking-reminder"
+if command -v codesign >/dev/null 2>&1; then
+  codesign -s - --force "$INSTALL_DIR/walking-reminder" >/dev/null 2>&1 || true
+fi
 log "installed to $INSTALL_DIR/walking-reminder"
 
 case ":$PATH:" in
@@ -114,7 +125,73 @@ esac
 # ----------------------------------------------------------- health check
 WR="$INSTALL_DIR/walking-reminder"
 "$WR" --version || die "health check failed"
+# doctor validates the install and extracts the bundled character assets
+"$WR" doctor >/dev/null 2>&1 || true
 log "health check passed: $("$WR" --version | head -1)"
+
+# ---------------------------------------------------- macOS: install as app
+# Double-clickable "Walking Reminder" in /Applications (agent app: starts
+# the daemon quietly, no Dock icon). Spotlight finds it too.
+if [ "$OS" = "macos" ]; then
+  APP_PARENT="${APP_DIR:-/Applications}"
+  [ -d "$APP_PARENT" ] && [ -w "$APP_PARENT" ] || APP_PARENT="$HOME/Applications"
+  mkdir -p "$APP_PARENT" 2>/dev/null || APP_PARENT="$HOME/Applications"
+  APP="$APP_PARENT/Walking Reminder.app"
+  rm -rf "$APP"
+  mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+
+  cat > "$APP/Contents/MacOS/WalkingReminder" <<LAUNCHER
+#!/bin/sh
+exec "$INSTALL_DIR/walking-reminder" start
+LAUNCHER
+  chmod +x "$APP/Contents/MacOS/WalkingReminder"
+
+  cat > "$APP/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Walking Reminder</string>
+    <key>CFBundleDisplayName</key>
+    <string>Walking Reminder</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.walking-reminder.app</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundleExecutable</key>
+    <string>WalkingReminder</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSUIElement</key>
+    <true/>
+</dict>
+</plist>
+PLIST
+
+  # Icon from the installed character's sprite (active character first,
+  # then the bundled default). Skipped gracefully if tools are missing.
+  SPRITE=""
+  for cand in \
+    "$HOME/.walking-reminder/characters/$(python3 -c "import json;print(json.load(open('$HOME/.walking-reminder/config.json')).get('character',''))" 2>/dev/null)/walk_01.png" \
+    "$HOME/.walking-reminder/characters/footballer/walk_01.png"; do
+    [ -f "$cand" ] && SPRITE="$cand" && break
+  done
+  if [ -n "$SPRITE" ] && command -v iconutil >/dev/null 2>&1 && command -v sips >/dev/null 2>&1; then
+    ICONSET="$(mktemp -d)/icon.iconset"
+    mkdir -p "$ICONSET"
+    for size in 16 32 128 256 512; do
+      sips -z "$size" "$size" "$SPRITE" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null 2>&1
+      sips -z $((size*2)) $((size*2)) "$SPRITE" --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null 2>&1
+    done
+    if iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns" >/dev/null 2>&1; then
+      plutil -insert CFBundleIconFile -string "AppIcon" "$APP/Contents/Info.plist" >/dev/null 2>&1 || true
+    fi
+  fi
+  log "app installed: $APP (double-click or Spotlight: \"Walking Reminder\")"
+fi
 
 printf '\n\033[1mWalking Reminder is installed!\033[0m\n\n'
 cat <<'EOF'

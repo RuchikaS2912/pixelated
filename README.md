@@ -42,6 +42,10 @@ less install.sh && sh install.sh
 The installer detects your OS + architecture, downloads the right binary,
 verifies its SHA-256 checksum, installs it, and runs a health check.
 
+**On macOS it also installs a real app**: "Walking Reminder" appears in
+`/Applications` (icon built from your character's sprite) — double-click
+it or find it in Spotlight to start everything after quitting.
+
 ### From source (works anywhere, no release needed)
 
 1. Install Rust: https://rustup.rs
@@ -66,6 +70,9 @@ sudo cp target/release/walking-reminder /usr/local/bin/
 walking-reminder --version    # health check
 walking-reminder test         # watch him walk across your screen
 ```
+
+On macOS, just open **Walking Reminder** from `/Applications` or
+Spotlight — the daemon, menu bar item, and desktop pet all come back.
 
 ---
 
