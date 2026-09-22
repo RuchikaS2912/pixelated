@@ -72,7 +72,7 @@ pub fn schedule_tick(
     fired
 }
 
-/// Run the daemon until stopped via IPC. Blocks the calling thread.
+/// Run the daemon until stopped via IPC (or the menu bar Quit).
 pub fn run(bin: std::path::PathBuf) -> Result<(), DaemonError> {
     let home = Home::resolve();
     home.ensure()?;
@@ -127,6 +127,38 @@ pub fn run(bin: std::path::PathBuf) -> Result<(), DaemonError> {
         });
     }
 
+    // Scheduler loop: background thread on macOS (main thread hosts the
+    // menu bar), blocking on other platforms.
+    #[cfg(target_os = "macos")]
+    let handle = {
+        let shared = shared.clone();
+        let home = home.clone();
+        let bin = bin.clone();
+        std::thread::spawn(move || scheduler_loop(shared, home, bin))
+    };
+
+    #[cfg(target_os = "macos")]
+    {
+        crate::menubar::run_menu_bar(shared.clone(), bin.clone(), home.clone());
+        // Quit selected: stop the scheduler and clean up.
+        let _ = handle.join();
+        log_to_file(&home, "daemon stop");
+        let _ = std::fs::remove_file(home.socket_file());
+        let _ = std::fs::remove_file(home.pid_file());
+        return Ok(());
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        scheduler_loop(shared, home, bin);
+        log_to_file(&home, "daemon stop");
+        let _ = std::fs::remove_file(home.socket_file());
+        let _ = std::fs::remove_file(home.pid_file());
+        Ok(())
+    }
+}
+
+fn scheduler_loop(shared: Arc<Shared>, home: Home, bin: std::path::PathBuf) {
     // Main loop.
     let mut last_tick_wall = SystemTime::now();
     let mut reminders_mtime = file_mtime(&home.reminders_file());
@@ -214,10 +246,6 @@ pub fn run(bin: std::path::PathBuf) -> Result<(), DaemonError> {
         }
     }
 
-    log_to_file(&home, "daemon stop");
-    let _ = std::fs::remove_file(home.socket_file());
-    let _ = std::fs::remove_file(home.pid_file());
-    Ok(())
 }
 
 fn wremind_render_placeholder() {

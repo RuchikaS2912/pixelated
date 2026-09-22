@@ -85,6 +85,15 @@ walking-reminder status
 An hour later, your character walks across your desktop:
 **💧 Drink water!**
 
+### Menu bar control (macOS)
+
+While the daemon runs, a small ⚽ sits in your menu bar:
+
+- **Walk now** — he crosses the screen immediately
+- **Pause / Resume all reminders**
+- **Show / Hide desktop pet**
+- **Quit Walking Reminder** — no terminal needed
+
 ### The desktop pet
 
 ```bash
