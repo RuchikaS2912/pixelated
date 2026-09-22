@@ -29,13 +29,13 @@ reminder — then walks off again. He can also sit on your desktop as a
 ### macOS / Linux — one line in the Terminal
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/RuchikaS2912/pixelated/main/installer/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/RuchikaS2912/pixelated/master/installer/install.sh | sh
 ```
 
 Prefer to inspect first? (recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/RuchikaS2912/pixelated/main/installer/install.sh -o install.sh
+curl -fsSL https://raw.githubusercontent.com/RuchikaS2912/pixelated/master/installer/install.sh -o install.sh
 less install.sh && sh install.sh
 ```
 

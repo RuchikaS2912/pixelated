@@ -31,18 +31,7 @@ pub struct Response {
     pub info: Option<StatusInfo>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct StatusInfo {
-    pub pid: u32,
-    pub reminders: usize,
-    pub enabled_reminders: usize,
-    pub character: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub next_title: Option<String>,
-    /// Seconds until next reminder fires (positive = future).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub next_in_secs: Option<i64>,
-}
+pub use crate::runner_status::StatusInfo;
 
 impl Response {
     pub fn ok(info: Option<StatusInfo>) -> Response {

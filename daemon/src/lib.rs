@@ -5,9 +5,14 @@
 //! Idle cost is a 1s poll loop (~0% CPU). The renderer runs as a
 //! separate short-lived process, so the daemon itself stays tiny.
 
+#[cfg(unix)]
+pub mod ipc;
+#[cfg(not(unix))]
+#[path = "ipc_stub.rs"]
 pub mod ipc;
 pub mod queue;
 pub mod runner;
+pub mod runner_status;
 pub mod spawn;
 pub mod startup;
 
