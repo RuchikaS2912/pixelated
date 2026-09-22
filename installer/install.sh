@@ -182,10 +182,12 @@ PLIST
   if [ -n "$SPRITE" ] && command -v iconutil >/dev/null 2>&1 && command -v sips >/dev/null 2>&1; then
     ICONSET="$(mktemp -d)/icon.iconset"
     mkdir -p "$ICONSET"
-    for size in 16 32 128 256 512; do
+    # Slim icon set: standard sizes only (no wasteful @2x upscales from
+    # small sprites) keeps the .app bundle tiny.
+    for size in 16 32 128 256; do
       sips -z "$size" "$size" "$SPRITE" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null 2>&1
-      sips -z $((size*2)) $((size*2)) "$SPRITE" --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null 2>&1
     done
+    sips -z 512 512 "$SPRITE" --out "$ICONSET/icon_512x512.png" >/dev/null 2>&1
     if iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns" >/dev/null 2>&1; then
       plutil -insert CFBundleIconFile -string "AppIcon" "$APP/Contents/Info.plist" >/dev/null 2>&1 || true
     fi

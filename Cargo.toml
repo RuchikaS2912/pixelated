@@ -19,7 +19,7 @@ repository = "https://github.com/RuchikaS2912/pixelated"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
-chrono-tz = { version = "0.10", features = ["serde"] }
+chrono-tz = { version = "0.10" }
 thiserror = "2"
 
 [profile.release]
