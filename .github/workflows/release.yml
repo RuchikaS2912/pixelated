@@ -56,7 +56,7 @@ jobs:
           cp installer/install.sh "$STAGE/"
           cp README.md LICENSE "$STAGE/" 2>/dev/null || true
           tar -czf "$STAGE.tar.gz" "$STAGE"
-          shasum -a 256 "$STAGE.tar.gz" >> SHA256SUMS
+          shasum -a 256 "$STAGE.tar.gz" >> "SHA256SUMS.${{ matrix.suffix }}"
 
       - name: Package (windows)
         if: matrix.os == 'windows-latest'
@@ -68,14 +68,14 @@ jobs:
           Copy-Item "target/${{ matrix.target }}/release/dribble.exe" $STAGE/
           Compress-Archive -Path $STAGE -DestinationPath "$STAGE.zip"
           $hash = (Get-FileHash "$STAGE.zip" -Algorithm SHA256).Hash.ToLower()
-          "$hash  $STAGE.zip" | Out-File -Append -Encoding ascii SHA256SUMS
+          "$hash  $STAGE.zip" | Out-File -Append -Encoding ascii "SHA256SUMS.${{ matrix.suffix }}"
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.suffix }}
           path: |
             dribble-*
-            SHA256SUMS
+            SHA256SUMS.*
 
   release:
     needs: build
@@ -87,13 +87,12 @@ jobs:
           merge-multiple: true
 
       - name: Merge checksums
-        run: cat SHA256SUMS 2>/dev/null | sort -u > SHA256SUMS.final || true
+        run: cat SHA256SUMS.* 2>/dev/null | sort -u > SHA256SUMS || true
 
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             dribble-*.tar.gz
             dribble-*.zip
-            SHA256SUMS.final
-        # published under both names so old installers keep working
+            SHA256SUMS
           generate_release_notes: true
