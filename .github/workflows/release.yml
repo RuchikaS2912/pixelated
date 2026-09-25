@@ -87,12 +87,13 @@ jobs:
           merge-multiple: true
 
       - name: Merge checksums
-        run: cat SHA256SUMS 2>/dev/null | sort -u > SHA256SUMS.merged || true
+        run: cat SHA256SUMS 2>/dev/null | sort -u > SHA256SUMS.final || true
 
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             dribble-*.tar.gz
             dribble-*.zip
-            SHA256SUMS.merged
+            SHA256SUMS.final
+        # published under both names so old installers keep working
           generate_release_notes: true

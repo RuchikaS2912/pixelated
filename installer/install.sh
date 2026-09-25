@@ -69,7 +69,11 @@ case "$OS" in
 esac
 
 $FETCH -o "$TMP/$ASSET" "$BASE/$ASSET" || die "download failed: $BASE/$ASSET"
-$FETCH -o "$TMP/SHA256SUMS" "$BASE/SHA256SUMS" || die "checksums download failed"
+# checksums are published as SHA256SUMS (newer releases) or
+# SHA256SUMS.merged (v0.2.4-era assets) — accept either.
+$FETCH -o "$TMP/SHA256SUMS" "$BASE/SHA256SUMS" \
+  || $FETCH -o "$TMP/SHA256SUMS" "$BASE/SHA256SUMS.merged" \
+  || die "checksums download failed"
 
 # --------------------------------------------------------------- verify
 if command -v shasum >/dev/null 2>&1; then
