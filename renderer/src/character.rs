@@ -265,7 +265,7 @@ mod tests {
         assert_eq!(c.def.name, "footballer");
         assert_eq!(c.frame_paths.len(), 6);
         assert_eq!(c.left_frame_paths.len(), 6);
-        assert_eq!(c.def.frame_rate, 10);
+        assert_eq!(c.def.frame_rate, 8);
         assert_eq!(c.def.walking_speed, 110);
     }
 

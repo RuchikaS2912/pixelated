@@ -634,12 +634,13 @@ fn main() {
         return;
     }
 
-    // default: regenerate the bundled footballer (teal, skin 3, hair 1)
+    // The bundled pack is hand-curated art now; this generates the legacy
+    // variant separately so it cannot clobber the shipped character.
     let look = Look { skin: 2, hair: 0, kit: Kit::Teal, glasses: false, beard: false };
     write_pack(
-        std::path::Path::new("characters/default-footballer"),
+        std::path::Path::new("characters/legacy-footballer"),
         &look,
-        "footballer",
+        "footballer-legacy",
         110,
     );
 }

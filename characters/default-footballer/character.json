@@ -1,9 +1,9 @@
 {
-  "description": "Custom character (teal #10)",
-  "frameRate": 10,
-  "frames": 6,
-  "height": 144,
   "name": "footballer",
+  "description": "Default football character (#10 kit, 6-frame walk cycle)",
+  "frameRate": 8,
+  "width": 200,
+  "height": 200,
   "walkingSpeed": 110,
-  "width": 144
+  "frames": 6
 }
