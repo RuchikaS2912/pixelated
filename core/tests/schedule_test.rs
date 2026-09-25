@@ -1,7 +1,7 @@
 //! Scheduling correctness tests (requirement: hourly, daily, weekly,
 //! custom, disabled, missed/sleep coalescing, DST, clock changes).
 
-use chrono::{DateTime, Duration, TimeZone, Timelike, Utc};
+use chrono::{Duration, TimeZone, Timelike, Utc};
 use chrono_tz::Tz;
 use wremind_core::model::{Reminder, RunState};
 use wremind_core::recurrence::{is_due, next_due, next_upcoming, Daily, Interval, Once, Schedule};
