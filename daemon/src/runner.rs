@@ -158,7 +158,7 @@ pub fn run(bin: std::path::PathBuf) -> Result<(), DaemonError> {
 
     #[cfg(not(target_os = "macos"))]
     {
-        scheduler_loop(shared, home, bin);
+        scheduler_loop(shared, home.clone(), bin);
         log_to_file(&home, "daemon stop");
         let _ = std::fs::remove_file(home.socket_file());
         let _ = std::fs::remove_file(home.pid_file());
