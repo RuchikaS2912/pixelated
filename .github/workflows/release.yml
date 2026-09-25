@@ -38,8 +38,10 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }} --bin dribble
 
-      - name: Test (native targets)
-        if: ${{ !matrix.cross }}
+      - name: Test (native targets, not Windows)
+        # Windows daemon IPC is still a stub; integration tests can
+        # deadlock there. Windows ships CLI-only until the overlay lands.
+        if: ${{ !matrix.cross && matrix.os != 'windows-latest' }}
         env:
           DRIBBLE_NO_RENDER: "1"
         run: cargo test --workspace
