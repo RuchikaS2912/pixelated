@@ -267,7 +267,7 @@ dependencies = [
 
 [[package]]
 name = "dribble"
-version = "0.1.0"
+version = "0.2.5"
 dependencies = [
  "assert_cmd",
  "chrono",
@@ -1136,7 +1136,7 @@ dependencies = [
 
 [[package]]
 name = "wremind-core"
-version = "0.1.0"
+version = "0.2.5"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -1148,7 +1148,7 @@ dependencies = [
 
 [[package]]
 name = "wremind-daemon"
-version = "0.1.0"
+version = "0.2.5"
 dependencies = [
  "block2",
  "chrono",
@@ -1166,7 +1166,7 @@ dependencies = [
 
 [[package]]
 name = "wremind-render"
-version = "0.1.0"
+version = "0.2.5"
 dependencies = [
  "block2",
  "objc2",
